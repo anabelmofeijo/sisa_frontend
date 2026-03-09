@@ -18,7 +18,7 @@ Este projeto implementa um conjunto de telas interligadas com sidebar fixa e nav
 ## Estrutura do Projeto
 
 ```text
-dashboard-energia/
+app/
 ├── index.html                # Entrada principal (redireciona para login)
 ├── login.html                # Tela de login
 ├── registo.html              # Tela de registo
@@ -64,12 +64,12 @@ Como o projeto é estático, pode ser aberto diretamente no navegador ou via ser
 
 ### Opção 1: Abrir arquivo
 
-1. Abra `dashboard-energia/index.html` no navegador.
+1. Abra `app/index.html` no navegador.
 2. O sistema redireciona automaticamente para `login.html`.
 
 ### Opção 2: Servidor local (recomendado)
 
-No terminal, dentro da pasta `dashboard-energia`:
+No terminal, dentro da pasta `app`:
 
 ```bash
 python3 -m http.server 5500

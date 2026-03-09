@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Geral</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand">
+          <div class="brand-main">
+            <svg class="icon icon-brand" viewBox="0 0 24 24">
+              <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"></path>
+            </svg>
+            <span>SISA</span>
+          </div>
+          <div class="brand-sub">Sistema Inteligente de<br />Sustentabilidade</div>
+        </div>
+
+        <div class="profile">
+          <div class="avatar">◌</div>
+          <div>
+            <div class="profile-name">Anabelmo Feijó</div>
+            <div class="profile-role">Técnico</div>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a class="menu-item active" href="dashboard.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+            Dashboard
+          </a>
+          <a class="menu-item" href="energia.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+            Energia
+          </a>
+          <a class="menu-item" href="baterias.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="8" width="14" height="8" rx="2"/><path d="M21 10v4"/></svg>
+            Gestão das Baterias
+          </a>
+          <a class="menu-item" href="alertas.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 21h4"/><path d="M12 17v4"/><path d="M5 9a7 7 0 1114 0c0 3-2 4-3 6H8C7 13 5 12 5 9z"/></svg>
+            Alertas &amp; Segurança
+          </a>
+          <a class="menu-item" href="manutencao.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 007 7l4-4a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7-7l-4 4a5 5 0 107 7l1-1"/></svg>
+            Manutenção
+          </a>
+          <a class="menu-item" href="edificio.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h8"/></svg>
+            Energia para Edifício
+          </a>
+        </nav>
+      </div>
+
+      <button class="logout" type="button">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Sair
+      </button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Dashboard Geral</h1>
+          <p class="subtitle">Visão rápida do estado do sistema</p>
+        </div>
+        <div class="datetime">
+          quarta-feira, 14 de janeiro de 2026<br />
+          <strong>18:49:20</strong>
+        </div>
+      </div>
+
+      <section class="card status">
+        <div class="status-title">
+          <svg class="icon icon-status" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+          Estado do Elevador
+        </div>
+        <div class="status-sub">
+          <span class="dot"></span>
+          Em funcionamento
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card battery">
+          <div class="battery-head">
+            <div class="section-title">
+              <svg class="icon icon-battery-a" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+              Bateria A
+            </div>
+            <span class="badge gray">A carregar</span>
+          </div>
+          <div class="label-row">
+            <span>Carga</span>
+            <span class="big-percent green">80%</span>
+          </div>
+          <div class="progress"><div class="bar bar-80"></div></div>
+          <div class="health green">
+            <span>Saúde da bateria</span>
+            <strong>95%</strong>
+          </div>
+        </section>
+
+        <section class="card battery">
+          <div class="battery-head">
+            <div class="section-title">
+              <svg class="icon icon-battery-b" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+              Bateria B
+            </div>
+            <span class="badge dark">Em uso</span>
+          </div>
+          <div class="label-row">
+            <span>Carga</span>
+            <span class="big-percent yellow">44%</span>
+          </div>
+          <div class="progress"><div class="bar bar-44"></div></div>
+          <div class="health yellow">
+            <span>Saúde da bateria</span>
+            <strong>92%</strong>
+          </div>
+        </section>
+
+        <section class="card section">
+          <div class="section-title">
+            <svg class="icon icon-source" viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+            Fonte Ativa de Energia
+          </div>
+          <div class="section-subtitle">Tempo real</div>
+          <div class="inner-card">
+            <svg class="icon icon-wave" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+            <div>
+              <div class="source-name">Regeneração do elevador</div>
+              <div class="source-note">A alimentar o sistema</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card section">
+          <div class="section-title">
+            <svg class="icon icon-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h8"/></svg>
+            Energia para o Edifício
+          </div>
+          <div class="section-subtitle">Distribuição atual</div>
+          <div class="building-row">
+            <span>Energia enviada</span>
+            <span class="building-val">2.4 kWh</span>
+          </div>
+          <div class="dest">
+            <span>Destino principal</span>
+            <strong>Iluminação</strong>
+          </div>
+        </section>
+      </div>
+
+      <div class="update">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+        Atualização automática a cada 10 segundos • Última atualização: 18:49:20
+      </div>
+    </main>
+  </div>
+  <script src="js/main.js"></script>
+</body>
+</html>

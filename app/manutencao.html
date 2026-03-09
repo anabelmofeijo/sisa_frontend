@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manutenção</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand">
+          <div class="brand-main">
+            <svg class="icon icon-brand" viewBox="0 0 24 24">
+              <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"></path>
+            </svg>
+            <span>SISA</span>
+          </div>
+          <div class="brand-sub">Sistema Inteligente de<br />Sustentabilidade</div>
+        </div>
+
+        <div class="profile">
+          <div class="avatar">◌</div>
+          <div>
+            <div class="profile-name">Anabelmofeijo</div>
+            <div class="profile-role">Técnico</div>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a class="menu-item" href="dashboard.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+            Dashboard
+          </a>
+          <a class="menu-item" href="energia.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+            Energia
+          </a>
+          <a class="menu-item" href="baterias.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="8" width="14" height="8" rx="2"/><path d="M21 10v4"/></svg>
+            Gestão das Baterias
+          </a>
+          <a class="menu-item" href="alertas.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 21h4"/><path d="M12 17v4"/><path d="M5 9a7 7 0 1114 0c0 3-2 4-3 6H8C7 13 5 12 5 9z"/></svg>
+            Alertas &amp; Segurança
+          </a>
+          <a class="menu-item active" href="manutencao.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 007 7l4-4a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7-7l-4 4a5 5 0 107 7l1-1"/></svg>
+            Manutenção
+          </a>
+          <a class="menu-item" href="edificio.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h8"/></svg>
+            Energia para Edifício
+          </a>
+        </nav>
+      </div>
+
+      <button class="logout" type="button">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Sair
+      </button>
+    </aside>
+
+    <main class="main maintenance-main" id="maintenance-page">
+      <div class="topbar maintenance-topbar">
+        <div>
+          <h1>Manutenção</h1>
+          <p class="subtitle">Manutenção preventiva e corretiva do sistema</p>
+        </div>
+      </div>
+
+      <section class="maintenance-stats-grid">
+        <article class="card maintenance-stat green">
+          <p>Horas de Operação</p>
+          <strong>8,234</strong>
+          <span class="m-stat-icon">◷</span>
+        </article>
+        <article class="card maintenance-stat blue">
+          <p>Viagens Totais</p>
+          <strong>124,587</strong>
+          <span class="m-stat-icon">↗</span>
+        </article>
+        <article class="card maintenance-stat amber">
+          <p>Última Manutenção</p>
+          <strong class="small">10 Nov 2024</strong>
+          <span class="m-stat-icon">⌕</span>
+        </article>
+        <article class="card maintenance-stat cyan">
+          <p>Próxima Manutenção</p>
+          <strong class="small">28 Dez 2024</strong>
+          <span class="m-stat-icon">⚒</span>
+        </article>
+      </section>
+
+      <section class="card maintenance-block">
+        <h2>Componentes Monitorados</h2>
+        <p class="m-sub">Estado e cronograma de manutenção</p>
+
+        <article class="component-card ok" data-component>
+          <header>
+            <div>
+              <h3>Motor</h3>
+              <p>8234 horas de operação</p>
+            </div>
+            <span class="chip ok">Ótimo</span>
+          </header>
+          <div class="component-grid">
+            <div class="mini-info">
+              <span>Última Manutenção</span>
+              <strong>15/10/2024</strong>
+            </div>
+            <div class="mini-info">
+              <span>Próxima Manutenção</span>
+              <strong>15/01/2025</strong>
+              <em>Atrasada</em>
+            </div>
+            <div class="mini-info progress-box">
+              <span>Confiabilidade</span>
+              <div class="progress"><div class="bar bar-98"></div></div>
+            </div>
+          </div>
+          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
+        </article>
+
+        <article class="component-card ok" data-component>
+          <header>
+            <div>
+              <h3>Inversor</h3>
+              <p>8234 horas de operação</p>
+            </div>
+            <span class="chip ok">Ótimo</span>
+          </header>
+          <div class="component-grid">
+            <div class="mini-info">
+              <span>Última Manutenção</span>
+              <strong>01/11/2024</strong>
+            </div>
+            <div class="mini-info">
+              <span>Próxima Manutenção</span>
+              <strong>01/02/2025</strong>
+              <em>Atrasada</em>
+            </div>
+            <div class="mini-info progress-box">
+              <span>Confiabilidade</span>
+              <div class="progress"><div class="bar bar-96"></div></div>
+            </div>
+          </div>
+          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
+        </article>
+
+        <article class="component-card warn" data-component>
+          <header>
+            <div>
+              <h3>Sistema Regenerativo</h3>
+              <p>8234 horas de operação</p>
+            </div>
+            <span class="chip warn">Atenção</span>
+          </header>
+          <div class="component-grid">
+            <div class="mini-info">
+              <span>Última Manutenção</span>
+              <strong>20/09/2024</strong>
+            </div>
+            <div class="mini-info">
+              <span>Próxima Manutenção</span>
+              <strong>20/12/2024</strong>
+              <em>Urgente</em>
+            </div>
+            <div class="mini-info progress-box">
+              <span>Confiabilidade</span>
+              <div class="progress"><div class="bar bar-74"></div></div>
+            </div>
+          </div>
+          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
+        </article>
+
+        <article class="component-card warn" data-component>
+          <header>
+            <div>
+              <h3>Controlador de Baterias</h3>
+              <p>8234 horas de operação</p>
+            </div>
+            <span class="chip warn">Atenção</span>
+          </header>
+          <div class="component-grid">
+            <div class="mini-info">
+              <span>Última Manutenção</span>
+              <strong>15/08/2024</strong>
+            </div>
+            <div class="mini-info">
+              <span>Próxima Manutenção</span>
+              <strong>28/12/2024</strong>
+              <em>Atrasada</em>
+            </div>
+            <div class="mini-info progress-box">
+              <span>Confiabilidade</span>
+              <div class="progress"><div class="bar bar-94"></div></div>
+            </div>
+          </div>
+          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
+        </article>
+      </section>
+
+      <section class="card recurring-errors-card">
+        <h2>Erros Recorrentes</h2>
+        <p class="m-sub">Problemas que ocorreram múltiplas vezes</p>
+
+        <article class="error-item">
+          <div>
+            <h3>Sistema Regenerativo</h3>
+            <p>Eficiência 5% abaixo do normal</p>
+            <small>Última ocorrência: 20/12/2024</small>
+          </div>
+          <span class="error-count">3×</span>
+        </article>
+
+        <article class="error-item">
+          <div>
+            <h3>Controlador de Baterias</h3>
+            <p>Atraso na troca de baterias</p>
+            <small>Última ocorrência: 18/12/2024</small>
+          </div>
+          <span class="error-count">2×</span>
+        </article>
+
+        <article class="error-item">
+          <div>
+            <h3>Sensor de Corrente</h3>
+            <p>Leitura intermitente</p>
+            <small>Última ocorrência: 15/12/2024</small>
+          </div>
+          <span class="error-count">5×</span>
+        </article>
+      </section>
+
+      <section class="card preventive-banner">
+        <h3>Manutenção Preventiva Ativa</h3>
+        <p>O sistema de manutenção preventiva reduz falhas inesperadas, diminui custos de reparação e aumenta a vida útil dos componentes, garantindo maior disponibilidade e segurança do elevador.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

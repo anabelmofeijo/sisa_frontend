@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registo | SISA</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-page" id="register-page">
+  <main class="login-center">
+    <section class="login-card register-card">
+      <div class="login-header register-header">
+        <div class="login-logo-row">
+          <svg class="icon login-logo-icon" viewBox="0 0 24 24">
+            <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"></path>
+          </svg>
+          <span>SISA</span>
+        </div>
+        <h1>Criar Conta</h1>
+        <p>Registe-se para aceder ao Sistema Integrado de Sustentabilidade para Ascensores</p>
+      </div>
+
+      <form id="register-form" class="login-form" autocomplete="on">
+        <div class="register-grid-2">
+          <div>
+            <label for="reg-first-name">Primeiro Nome</label>
+            <div class="field-wrap">
+              <span class="field-icon">◌</span>
+              <input id="reg-first-name" name="first_name" type="text" placeholder="Seu nome" required />
+            </div>
+          </div>
+          <div>
+            <label for="reg-last-name">Último nome</label>
+            <div class="field-wrap">
+              <span class="field-icon">◌</span>
+              <input id="reg-last-name" name="last_name" type="text" placeholder="Seu nome" required />
+            </div>
+          </div>
+        </div>
+
+        <label for="reg-email">Email</label>
+        <div class="field-wrap">
+          <span class="field-icon">✉</span>
+          <input id="reg-email" name="email" type="email" placeholder="seu@email.pt" required />
+        </div>
+
+        <label for="reg-phone">Telefone</label>
+        <div class="field-wrap">
+          <span class="field-icon">◌</span>
+          <input id="reg-phone" name="phone" type="tel" placeholder="Numero de telefone" required />
+        </div>
+
+        <label for="reg-building">Edifício</label>
+        <div class="field-wrap">
+          <span class="field-icon">▣</span>
+          <input id="reg-building" name="building" type="text" placeholder="Nome do edifício" required />
+        </div>
+
+        <label for="reg-password">Palavra-passe</label>
+        <div class="field-wrap">
+          <span class="field-icon">⌂</span>
+          <input id="reg-password" name="password" type="password" placeholder="••••••••" required />
+          <button class="field-toggle reg-toggle" data-target="reg-password" type="button" aria-label="Mostrar palavra-passe">◉</button>
+        </div>
+
+        <label for="reg-password-confirm">Confirmar palavra-passe</label>
+        <div class="field-wrap">
+          <span class="field-icon">⌂</span>
+          <input id="reg-password-confirm" name="password_confirm" type="password" placeholder="••••••••" required />
+          <button class="field-toggle reg-toggle" data-target="reg-password-confirm" type="button" aria-label="Mostrar palavra-passe">◉</button>
+        </div>
+
+        <button type="submit" class="login-submit">Criar conta</button>
+      </form>
+
+      <div class="login-footer">
+        Já tem conta? <a href="login.html">Entrar</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

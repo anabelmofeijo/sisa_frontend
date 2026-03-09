@@ -2,49 +2,10 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login | SISA</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <meta http-equiv="refresh" content="0; url=/app/login.html" />
+  <title>Redirect</title>
 </head>
-<body class="login-page" id="login-page">
-  <main class="login-center">
-    <section class="login-card">
-      <div class="login-header">
-        <div class="login-logo-row">
-          <svg class="icon login-logo-icon" viewBox="0 0 24 24">
-            <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"></path>
-          </svg>
-          <span>SISA</span>
-        </div>
-        <h1>Bem-vindo ao SISA</h1>
-        <p>Sistema Inteligente de Sustentabilidade em Ascensores</p>
-      </div>
-
-      <form id="login-form" class="login-form" autocomplete="on">
-        <label for="login-email">Email</label>
-        <div class="field-wrap">
-          <span class="field-icon">✉</span>
-          <input id="login-email" name="email" type="email" placeholder="seu@email.pt" value="anabelmofeijo@gmail.com" required />
-        </div>
-
-        <label for="login-password">Palavra-passe</label>
-        <div class="field-wrap">
-          <span class="field-icon">⌂</span>
-          <input id="login-password" name="password" type="password" placeholder="••••••••" value="admin@admin" required />
-          <button id="toggle-password" class="field-toggle" type="button" aria-label="Mostrar palavra-passe">◉</button>
-        </div>
-
-        <a href="#" class="forgot-link">Esqueci a palavra-passe</a>
-
-        <button type="submit" class="login-submit">Entrar</button>
-      </form>
-
-      <div class="login-footer">
-        Não tem conta? <a href="registo.html">Registar</a>
-      </div>
-    </section>
-  </main>
-
-  <script src="js/main.js"></script>
+<body>
+  <script>window.location.replace('/app/login.html');</script>
 </body>
 </html>
