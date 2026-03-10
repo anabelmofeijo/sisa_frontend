@@ -2305,8 +2305,16 @@
 
 /* Landing page */
 .landing-page {
-  background: #f4faf7;
-  color: #111827;
+  background: var(--bg);
+  color: var(--text);
+  --brand-green: var(--green);
+  --brand-blue: var(--blue);
+  --brand-yellow: var(--yellow);
+  --brand-muted: var(--muted);
+  --brand-grad: linear-gradient(135deg, var(--brand-green), var(--brand-blue));
+  --brand-grad-soft: linear-gradient(145deg, rgba(14, 159, 110, 0.18), rgba(19, 128, 195, 0.12));
+  --brand-green-soft: #e7f5ef;
+  --brand-blue-soft: #e6f2f9;
 }
 
 .landing-header {
@@ -2341,7 +2349,7 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: linear-gradient(150deg, #13c2b2, #0ea96b);
+  background: var(--brand-grad);
   display: grid;
   place-items: center;
   color: #fff;
@@ -2357,7 +2365,7 @@
 
 .landing-brand-sub {
   font-size: 12px;
-  color: #64748b;
+  color: var(--brand-muted);
   margin-top: 2px;
 }
 
@@ -2374,7 +2382,7 @@
 }
 
 .landing-links a:hover {
-  color: #0f766e;
+  color: var(--brand-green);
 }
 
 .landing-actions {
@@ -2451,7 +2459,7 @@
 .landing-link {
   text-decoration: none;
   font-weight: 700;
-  color: #0f9f6e;
+  color: var(--brand-green);
   font-size: 14px;
 }
 
@@ -2468,23 +2476,23 @@
 }
 
 .landing-btn-green {
-  background: #0fb981;
+  background: var(--brand-green);
   color: #fff;
-  box-shadow: 0 10px 18px rgba(13, 153, 118, 0.2);
+  box-shadow: 0 10px 18px rgba(14, 159, 110, 0.2);
 }
 
 .landing-btn-green:hover {
-  background: #0ea06f;
+  background: #0c8a60;
 }
 
 .landing-btn-blue {
-  background: #0ea5e9;
+  background: var(--brand-blue);
   color: #fff;
-  box-shadow: 0 10px 18px rgba(14, 165, 233, 0.22);
+  box-shadow: 0 10px 18px rgba(19, 128, 195, 0.22);
 }
 
 .landing-btn-blue:hover {
-  background: #0c94d2;
+  background: #0f6fa5;
 }
 
 .landing-btn-outline {
@@ -2558,7 +2566,7 @@
   width: 92%;
   height: 92%;
   border-radius: 26px;
-  background: linear-gradient(145deg, #d9fbf0, #dff4ff);
+  background: var(--brand-grad-soft);
 }
 
 .visual-card {
@@ -2626,17 +2634,17 @@
 .visual-meter-label span {
   display: inline-block;
   font-size: 11px;
-  background: #2563eb;
+  background: var(--brand-blue);
   color: #ffffff;
   padding: 4px 8px;
   border-radius: 999px;
 }
 
 .visual-panel {
-  background: #f0f9ff;
+  background: var(--brand-blue-soft);
   border-radius: 14px;
   padding: 12px 14px;
-  border: 1px solid #e0f2fe;
+  border: 1px solid #d7e8f3;
   margin-bottom: 14px;
 }
 
@@ -2667,7 +2675,7 @@
 .visual-panel-fill {
   height: 100%;
   width: 78%;
-  background: #0ea5e9;
+  background: var(--brand-blue);
   border-radius: 999px;
 }
 
@@ -2679,10 +2687,10 @@
 }
 
 .visual-battery {
-  background: #f0fdf4;
+  background: var(--brand-green-soft);
   border-radius: 14px;
   padding: 10px 12px;
-  border: 1px solid #dcfce7;
+  border: 1px solid var(--green-soft);
 }
 
 .visual-battery-head {
@@ -2717,14 +2725,14 @@
 .visual-battery-track {
   height: 6px;
   border-radius: 999px;
-  background: #dcfce7;
+  background: var(--green-soft);
   overflow: hidden;
 }
 
 .visual-battery-fill {
   height: 100%;
   width: 85%;
-  background: #22c55e;
+  background: var(--brand-green);
 }
 
 .visual-battery-percent {
@@ -2766,15 +2774,15 @@
 }
 
 .visual-pill-icon.green {
-  background: #10b981;
+  background: var(--brand-green);
 }
 
 .visual-pill-icon.blue {
-  background: #0ea5e9;
+  background: var(--brand-blue);
 }
 
 .visual-pill-icon.orange {
-  background: #f59e0b;
+  background: var(--brand-yellow);
 }
 
 @media (max-width: 1050px) {
@@ -2835,7 +2843,7 @@
 }
 
 .landing-banner-card {
-  background: linear-gradient(135deg, #0fb981, #0ea5e9);
+  background: var(--brand-grad);
   color: #ffffff;
   border-radius: 18px;
   padding: 34px 28px;
@@ -3307,7 +3315,7 @@
 }
 
 .features-card {
-  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  background: var(--brand-grad);
   color: #ffffff;
   border-radius: 16px;
   padding: 18px;
@@ -3439,9 +3447,9 @@
   font-weight: 800;
 }
 
-.numbers-value.green { color: #22c55e; }
-.numbers-value.cyan { color: #38bdf8; }
-.numbers-value.yellow { color: #fbbf24; }
+.numbers-value.green { color: var(--brand-green); }
+.numbers-value.cyan { color: var(--brand-blue); }
+.numbers-value.yellow { color: var(--brand-yellow); }
 .numbers-value.purple { color: #a855f7; }
 
 .landing-about {
@@ -3631,7 +3639,7 @@
 }
 
 .values-banner {
-  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  background: var(--brand-grad);
   border-radius: 18px;
   padding: 30px 24px;
   color: #ffffff;
@@ -3668,7 +3676,7 @@
 }
 
 .footer-cta {
-  background: linear-gradient(135deg, #0fb981, #0ea5e9);
+  background: var(--brand-grad);
   padding-top: 70px;
   padding-bottom: 60px;
 }
@@ -3718,17 +3726,17 @@
 
 .cta-btn.light {
   background: #ffffff;
-  color: #0f6f5b;
+  color: var(--brand-green);
 }
 
 .cta-btn.dark {
-  background: #0b735d;
+  background: #0c8a60;
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.25);
 }
 
 .cta-btn.blue {
-  background: #0ea5e9;
+  background: var(--brand-blue);
   color: #ffffff;
 }
 
@@ -3888,7 +3896,7 @@
 }
 
 .landing-section-title p {
-  color: #64748b;
+  color: var(--brand-muted);
   font-size: 16px;
   line-height: 1.6;
 }
