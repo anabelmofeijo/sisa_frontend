@@ -52,15 +52,15 @@
       padding: 18px 14px;
     }
 
-    .brand-main {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #0f8f66;
-      font-weight: 800;
-      font-size: 24px;
-      line-height: 1;
-    }
+.brand-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f8f66;
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1;
+}
 
     .brand-sub {
       margin-top: 8px;
@@ -160,12 +160,16 @@
       margin-bottom: 14px;
     }
 
-    h1 {
-      font-size: 30px;
-      line-height: 1.1;
-      font-weight: 800;
-      color: #111a2a;
-    }
+h1 {
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #111a2a;
+}
+
+.page-title {
+  font-size: 26px;
+}
 
     .subtitle {
       margin-top: 6px;
@@ -2098,23 +2102,29 @@
       padding: 20px 18px 12px;
     }
 
-    .login-logo-row {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: #2f7356;
-      font-size: 34px;
-      line-height: 1;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
+.login-logo-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #2f7356;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
 
-    .login-logo-icon {
-      width: 34px;
-      height: 34px;
-      stroke: #f0a01e;
-      fill: #f0a01e;
-    }
+.login-logo-icon {
+  width: 34px;
+  height: 34px;
+  stroke: #f0a01e;
+  fill: #f0a01e;
+}
+
+.login-logo-img {
+  height: 120px;
+  width: auto;
+  display: block;
+}
 
     .login-header h1 {
       color: #1f6a4c;
@@ -2269,9 +2279,77 @@
       color: #64748b;
     }
 
+    .mobile-nav {
+      display: none;
+      margin-bottom: 12px;
+    }
+
+    .mobile-nav details {
+      background: #ffffff;
+      border: 1px solid #d9dde3;
+      border-radius: 10px;
+    }
+
+    .mobile-nav summary {
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .mobile-nav summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .mobile-brand {
+      font-weight: 700;
+      color: #0f8f66;
+      font-size: 14px;
+    }
+
+    .mobile-toggle {
+      width: 18px;
+      height: 2px;
+      background: #0f172a;
+      border-radius: 999px;
+      position: relative;
+      display: block;
+    }
+
+    .mobile-toggle::before,
+    .mobile-toggle::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 18px;
+      height: 2px;
+      background: #0f172a;
+      border-radius: 999px;
+    }
+
+    .mobile-toggle::before { top: -6px; }
+    .mobile-toggle::after { top: 6px; }
+
+    .mobile-menu-links {
+      display: grid;
+      gap: 8px;
+      padding: 10px 12px 12px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .mobile-menu-links a {
+      text-decoration: none;
+      color: #1f2937;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
     @media (max-width: 1260px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { display: none; }
+      .mobile-nav { display: block; }
       .subtitle, .section-subtitle, .source-note, .dest, .label-row, .update, .status-sub { font-size: 16px; }
       h1 { font-size: 34px; }
       .status-title, .section-title, .source-name, .building-row { font-size: 22px; }
@@ -2345,22 +2423,14 @@
   gap: 10px;
 }
 
-.landing-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--brand-grad);
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: 18px;
+.landing-logo-img {
+  height: 70px;
+  width: auto;
+  display: block;
 }
 
-.landing-brand-name {
-  font-weight: 800;
-  font-size: 18px;
-  color: #0f172a;
+.landing-brand-text {
+  display: grid;
 }
 
 .landing-brand-sub {
