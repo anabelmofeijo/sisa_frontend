@@ -575,11 +575,26 @@ document.addEventListener('DOMContentLoaded', function () {
     consumedPoints: [],
     barCenters: [],
     barValues: [],
-    labels: []
+    labels: [],
+    energySnapshot: null
   };
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function toNumber(value) {
+    if (typeof value === 'number' && !isNaN(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '');
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? null : parsed;
+    }
+
+    return null;
   }
 
   function sum(values) {
@@ -608,6 +623,20 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function updateKpis(data) {
+    if (state.energySnapshot) {
+      kpiGerada.textContent = state.energySnapshot.generated.toFixed(1) + ' kWh';
+      kpiConsumida.textContent = state.energySnapshot.consumed.toFixed(1) + ' kWh';
+      kpiArmazenada.textContent = state.energySnapshot.stored.toFixed(1) + ' kWh';
+      return;
+    }
+
+    if (state.energySnapshot === false) {
+      kpiGerada.textContent = 'Sem dados';
+      kpiConsumida.textContent = 'Sem dados';
+      kpiArmazenada.textContent = 'Sem dados';
+      return;
+    }
+
     const totalGenerated = sum(data.generated);
     const totalConsumed = sum(data.consumed);
     const stored = Math.max((totalGenerated - totalConsumed) * 0.85 + 7, 0);
@@ -722,14 +751,87 @@ document.addEventListener('DOMContentLoaded', function () {
     chartAreaGreen.setAttribute('d', areaPath(state.generatedPoints));
     chartAreaBlue.setAttribute('d', areaPath(state.consumedPoints));
 
-    sourceRegFill.style.width = data.sourceReg.toFixed(1) + '%';
-    sourceSolFill.style.width = data.sourceSolar.toFixed(1) + '%';
-    sourceRegLabel.textContent = data.sourceReg.toFixed(1) + '%';
-    sourceSolLabel.textContent = data.sourceSolar.toFixed(1) + '%';
+    if (state.energySnapshot) {
+      sourceRegFill.style.width = state.energySnapshot.origin.regeneration.toFixed(1) + '%';
+      sourceSolFill.style.width = state.energySnapshot.origin.panel.toFixed(1) + '%';
+      sourceRegLabel.textContent = state.energySnapshot.origin.regeneration.toFixed(1) + '%';
+      sourceSolLabel.textContent = state.energySnapshot.origin.panel.toFixed(1) + '%';
+    } else if (state.energySnapshot === false) {
+      sourceRegFill.style.width = '0%';
+      sourceSolFill.style.width = '0%';
+      sourceRegLabel.textContent = 'Sem dados';
+      sourceSolLabel.textContent = 'Sem dados';
+    } else {
+      sourceRegFill.style.width = data.sourceReg.toFixed(1) + '%';
+      sourceSolFill.style.width = data.sourceSolar.toFixed(1) + '%';
+      sourceRegLabel.textContent = data.sourceReg.toFixed(1) + '%';
+      sourceSolLabel.textContent = data.sourceSolar.toFixed(1) + '%';
+    }
 
     updateKpis(data);
     renderBars(data.labels, data.building, initialFocus);
     updateLineFocus(initialFocus);
+  }
+
+  function extractEnergyList(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    if (payload && Array.isArray(payload.items)) {
+      return payload.items;
+    }
+
+    return [];
+  }
+
+  function normalizeEnergySnapshot(entry) {
+    if (!entry) {
+      return null;
+    }
+
+    const energyOrigin = entry.energy_origin || {};
+    const panel = toNumber(energyOrigin.panel) || 0;
+    const regeneration = toNumber(energyOrigin.regeneration) || 0;
+    const other = toNumber(energyOrigin.additionalProp3) || 0;
+    const totalOrigin = panel + regeneration + other;
+
+    return {
+      generated: toNumber(entry.energy_generated) || 0,
+      consumed: toNumber(entry.energy_consumed) || 0,
+      stored: toNumber(entry.energy_stored) || 0,
+      origin: {
+        panel: totalOrigin > 0 ? (panel / totalOrigin) * 100 : 0,
+        regeneration: totalOrigin > 0 ? (regeneration / totalOrigin) * 100 : 0
+      }
+    };
+  }
+
+  async function refreshEnergySnapshot() {
+    if (!window.SisaApi) {
+      return;
+    }
+
+    try {
+      const response = await window.SisaApi.get('/energy/ist_energy');
+      const list = extractEnergyList(response).filter(Boolean);
+      if (!list.length) {
+        state.energySnapshot = false;
+        renderCurrentRange(state.currentIndex);
+        return;
+      }
+
+      state.energySnapshot = normalizeEnergySnapshot(list[list.length - 1]);
+      renderCurrentRange(state.currentIndex);
+    } catch (error) {
+      state.energySnapshot = false;
+      renderCurrentRange(state.currentIndex);
+      console.error('Falha ao atualizar energia.', error);
+    }
   }
 
   function applyRange(range) {
@@ -808,6 +910,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   applyRange('daily');
   startLiveUpdates();
+  refreshEnergySnapshot();
+  window.setInterval(refreshEnergySnapshot, 5 * 60 * 1000);
 });
 
 document.addEventListener('DOMContentLoaded', function () {
