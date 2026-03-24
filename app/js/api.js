@@ -1,0 +1,94 @@
+(function (window) {
+  const DEFAULT_BASE_URL = 'https://sisa-api-58wf.onrender.com';
+
+  let baseUrl = resolveBaseUrl();
+
+  function resolveBaseUrl() {
+    const metaTag = document.querySelector('meta[name="sisa-api-base-url"]');
+    const metaValue = metaTag ? metaTag.getAttribute('content') : '';
+
+    return (window.SISA_API_BASE_URL || metaValue || DEFAULT_BASE_URL).replace(/\/+$/, '');
+  }
+
+  function buildUrl(path) {
+    if (!path) {
+      return baseUrl;
+    }
+
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+
+    const normalizedPath = path.charAt(0) === '/' ? path : '/' + path;
+    return baseUrl + normalizedPath;
+  }
+
+  async function parseResponse(response) {
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.indexOf('application/json') !== -1;
+    const payload = isJson ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      const error = new Error('Falha ao consumir a API.');
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
+    }
+
+    return payload;
+  }
+
+  async function request(path, options) {
+    const config = options || {};
+    const headers = Object.assign(
+      {
+        Accept: 'application/json'
+      },
+      config.headers || {}
+    );
+
+    const fetchOptions = Object.assign({}, config, { headers: headers });
+    const hasBody = fetchOptions.body !== undefined && fetchOptions.body !== null;
+    const isFormData = typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData;
+
+    if (hasBody && !isFormData && typeof fetchOptions.body !== 'string') {
+      headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+      fetchOptions.body = JSON.stringify(fetchOptions.body);
+    }
+
+    const response = await fetch(buildUrl(path), fetchOptions);
+    return parseResponse(response);
+  }
+
+  const api = {
+    getBaseUrl: function () {
+      return baseUrl;
+    },
+    setBaseUrl: function (nextBaseUrl) {
+      if (!nextBaseUrl) {
+        return baseUrl;
+      }
+
+      baseUrl = String(nextBaseUrl).replace(/\/+$/, '');
+      return baseUrl;
+    },
+    request: request,
+    get: function (path, options) {
+      return request(path, Object.assign({}, options, { method: 'GET' }));
+    },
+    post: function (path, body, options) {
+      return request(path, Object.assign({}, options, { method: 'POST', body: body }));
+    },
+    put: function (path, body, options) {
+      return request(path, Object.assign({}, options, { method: 'PUT', body: body }));
+    },
+    patch: function (path, body, options) {
+      return request(path, Object.assign({}, options, { method: 'PATCH', body: body }));
+    },
+    delete: function (path, options) {
+      return request(path, Object.assign({}, options, { method: 'DELETE' }));
+    }
+  };
+
+  window.SisaApi = api;
+})(window);

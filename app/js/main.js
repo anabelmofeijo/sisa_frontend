@@ -2,9 +2,75 @@ document.addEventListener('DOMContentLoaded', function () {
   const logoutButtons = Array.from(document.querySelectorAll('.logout'));
   logoutButtons.forEach(function (button) {
     button.addEventListener('click', function () {
+      localStorage.removeItem('sisaToken');
+      localStorage.removeItem('sisaUser');
+      localStorage.removeItem('sisaLoginEmail');
       window.location.href = 'login.html';
     });
   });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const profileNames = Array.from(document.querySelectorAll('.profile-name'));
+  const profileRoles = Array.from(document.querySelectorAll('.profile-role'));
+
+  if (!profileNames.length) {
+    return;
+  }
+
+  const storedEmail = (localStorage.getItem('sisaLoginEmail') || '').trim().toLowerCase();
+  if (!storedEmail || !window.SisaApi) {
+    return;
+  }
+
+  function extractUsers(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && Array.isArray(payload.users)) {
+      return payload.users;
+    }
+
+    if (payload && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    return [];
+  }
+
+  function buildFullName(user) {
+    const firstName = user && user.name ? String(user.name).trim() : '';
+    const lastName = user && user.lastname ? String(user.lastname).trim() : '';
+    return (firstName + ' ' + lastName).trim();
+  }
+
+  window.SisaApi.get('/users/list_users')
+    .then(function (response) {
+      const users = extractUsers(response);
+      const currentUser = users.find(function (user) {
+        return user && user.email && String(user.email).trim().toLowerCase() === storedEmail;
+      });
+
+      if (!currentUser) {
+        return;
+      }
+
+      const fullName = buildFullName(currentUser) || storedEmail;
+
+      profileNames.forEach(function (element) {
+        element.textContent = fullName;
+      });
+
+      profileRoles.forEach(function (element) {
+        element.textContent = 'Técnico';
+      });
+    })
+    .catch(function () {
+      profileRoles.forEach(function (element) {
+        element.textContent = 'Técnico';
+      });
+    });
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -780,21 +846,50 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (form) {
-    form.addEventListener('submit', function (event) {
+    form.addEventListener('submit', async function (event) {
       event.preventDefault();
       const emailInput = document.getElementById('login-email');
+      const submitButton = form.querySelector('button[type="submit"]');
       const passwordInputValue = passwordInput ? passwordInput.value : '';
       const emailValue = emailInput ? emailInput.value.trim().toLowerCase() : '';
 
-      const defaultEmail = 'anabelmofeijo@gmail.com';
-      const defaultPassword = 'admin@admin';
-
-      if (emailValue === defaultEmail && passwordInputValue === defaultPassword) {
-        window.location.href = 'dashboard.html';
+      if (!window.SisaApi) {
+        window.alert('Cliente da API indisponível.');
         return;
       }
 
-      window.alert('Credenciais inválidas. Use os dados padrão.');
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'A entrar...';
+      }
+
+      try {
+        const response = await window.SisaApi.post('/users/login', {
+          email: emailValue,
+          password: passwordInputValue
+        });
+
+        localStorage.setItem('sisaUser', JSON.stringify(response));
+        localStorage.setItem('sisaLoginEmail', emailValue);
+
+        if (response && response.token) {
+          localStorage.setItem('sisaToken', response.token);
+        }
+
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        const message =
+          error && error.payload && error.payload.message
+            ? error.payload.message
+            : 'Nao foi possivel iniciar sessao. Verifique os dados e tente novamente.';
+
+        window.alert(message);
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Entrar';
+        }
+      }
     });
   }
 });
@@ -824,8 +919,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   if (form) {
-    form.addEventListener('submit', function (event) {
+    form.addEventListener('submit', async function (event) {
       event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      const firstName = document.getElementById('reg-first-name');
+      const lastName = document.getElementById('reg-last-name');
+      const email = document.getElementById('reg-email');
+      const phone = document.getElementById('reg-phone');
+      const building = document.getElementById('reg-building');
 
       if (!password || !passwordConfirm) {
         return;
@@ -836,8 +937,41 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      window.alert('Conta criada com sucesso.');
-      window.location.href = 'login.html';
+      if (!window.SisaApi) {
+        window.alert('Cliente da API indisponível.');
+        return;
+      }
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'A criar conta...';
+      }
+
+      try {
+        await window.SisaApi.post('/users/create_user', {
+          name: firstName ? firstName.value.trim() : '',
+          lastname: lastName ? lastName.value.trim() : '',
+          email: email ? email.value.trim().toLowerCase() : '',
+          building: building ? building.value.trim() : '',
+          password: password.value,
+          phone: phone ? phone.value.trim() : ''
+        });
+
+        window.alert('Conta criada com sucesso.');
+        window.location.href = 'login.html';
+      } catch (error) {
+        const message =
+          error && error.payload && error.payload.message
+            ? error.payload.message
+            : 'Nao foi possivel criar a conta. Tente novamente.';
+
+        window.alert(message);
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Criar conta';
+        }
+      }
     });
   }
 });
