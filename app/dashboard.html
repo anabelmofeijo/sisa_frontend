@@ -81,9 +81,9 @@
           <h1 class="page-title">Dashboard Geral</h1>
           <p class="subtitle">Visão rápida do estado do sistema</p>
         </div>
-        <div class="datetime">
-          quarta-feira, 14 de janeiro de 2026<br />
-          <strong>18:49:20</strong>
+        <div class="datetime" id="dashboard-datetime">
+          <span id="dashboard-date">--</span><br />
+          <strong id="dashboard-time">--:--:--</strong>
         </div>
       </div>
 
@@ -99,41 +99,41 @@
       </section>
 
       <div class="grid-2">
-        <section class="card battery">
+        <section class="card battery" data-battery-card="first_batery">
           <div class="battery-head">
             <div class="section-title">
               <svg class="icon icon-battery-a" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
               Bateria A
             </div>
-            <span class="badge gray">A carregar</span>
+            <span class="badge gray" data-battery-status>A carregar</span>
           </div>
           <div class="label-row">
             <span>Carga</span>
-            <span class="big-percent green">80%</span>
+            <span class="big-percent green" data-battery-percent>80%</span>
           </div>
-          <div class="progress"><div class="bar bar-80"></div></div>
-          <div class="health green">
+          <div class="progress"><div class="bar bar-80" data-battery-progress></div></div>
+          <div class="health green" data-battery-health-wrap>
             <span>Saúde da bateria</span>
-            <strong>95%</strong>
+            <strong data-battery-health>95%</strong>
           </div>
         </section>
 
-        <section class="card battery">
+        <section class="card battery" data-battery-card="second_batery">
           <div class="battery-head">
             <div class="section-title">
               <svg class="icon icon-battery-b" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
               Bateria B
             </div>
-            <span class="badge dark">Em uso</span>
+            <span class="badge dark" data-battery-status>Em uso</span>
           </div>
           <div class="label-row">
             <span>Carga</span>
-            <span class="big-percent yellow">44%</span>
+            <span class="big-percent yellow" data-battery-percent>44%</span>
           </div>
-          <div class="progress"><div class="bar bar-44"></div></div>
-          <div class="health yellow">
+          <div class="progress"><div class="bar bar-44" data-battery-progress></div></div>
+          <div class="health yellow" data-battery-health-wrap>
             <span>Saúde da bateria</span>
-            <strong>92%</strong>
+            <strong data-battery-health>92%</strong>
           </div>
         </section>
 
@@ -179,5 +179,3 @@
   <script src="js/main.js"></script>
 </body>
 </html>
-
-

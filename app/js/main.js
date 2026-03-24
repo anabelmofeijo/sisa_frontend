@@ -74,6 +74,423 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+  const dateElement = document.getElementById('dashboard-date');
+  const timeElement = document.getElementById('dashboard-time');
+
+  if (!dateElement || !timeElement) {
+    return;
+  }
+
+  function updateDashboardDateTime() {
+    const now = new Date();
+    dateElement.textContent = now.toLocaleDateString('pt-PT', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+    timeElement.textContent = now.toLocaleTimeString('pt-PT', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  }
+
+  updateDashboardDateTime();
+  window.setInterval(updateDashboardDateTime, 1000);
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const batteryCards = Array.from(document.querySelectorAll('[data-battery-card], [data-battery-panel]'));
+  if (!batteryCards.length || !window.SisaApi) {
+    return;
+  }
+
+  const refreshIntervalMs = 5 * 60 * 1000;
+  const batteryConfigs = [
+    { name: 'first_batery', label: 'Bateria A' },
+    { name: 'second_batery', label: 'Bateria B' }
+  ];
+
+  function extractList(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    if (payload && Array.isArray(payload.batteries)) {
+      return payload.batteries;
+    }
+
+    if (payload && Array.isArray(payload.items)) {
+      return payload.items;
+    }
+
+    return [];
+  }
+
+  function toNumber(value) {
+    if (typeof value === 'number' && !isNaN(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '');
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? null : parsed;
+    }
+
+    return null;
+  }
+
+  function pickNumber(source, keys) {
+    if (!source) {
+      return null;
+    }
+
+    for (let index = 0; index < keys.length; index += 1) {
+      const value = toNumber(source[keys[index]]);
+      if (value !== null) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  function pickString(source, keys) {
+    if (!source) {
+      return '';
+    }
+
+    for (let index = 0; index < keys.length; index += 1) {
+      const value = source[keys[index]];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return '';
+  }
+
+  function clampPercent(value) {
+    const safeValue = value === null ? 0 : value;
+    return Math.max(0, Math.min(100, safeValue));
+  }
+
+  function healthLabelToPercent(value) {
+    if (typeof value === 'number' && !isNaN(value)) {
+      return clampPercent(value);
+    }
+
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === 'excellent') {
+      return 100;
+    }
+
+    if (normalized === 'good') {
+      return 85;
+    }
+
+    if (normalized === 'fair' || normalized === 'average') {
+      return 65;
+    }
+
+    if (normalized === 'poor' || normalized === 'bad') {
+      return 35;
+    }
+
+    return null;
+  }
+
+  function percentTone(percent) {
+    if (percent >= 70) {
+      return 'green';
+    }
+
+    if (percent >= 35) {
+      return 'yellow';
+    }
+
+    return 'orange';
+  }
+
+  function deriveStatus(status, currentValue) {
+    const normalizedStatus = status.toLowerCase();
+
+    if (normalizedStatus) {
+      if (normalizedStatus.indexOf('charge') !== -1 || normalizedStatus.indexOf('carreg') !== -1) {
+        return 'A carregar';
+      }
+
+      if (
+        normalizedStatus.indexOf('discharg') !== -1 ||
+        normalizedStatus.indexOf('uso') !== -1 ||
+        normalizedStatus.indexOf('active') !== -1
+      ) {
+        return 'Em uso';
+      }
+
+      if (normalizedStatus.indexOf('idle') !== -1 || normalizedStatus.indexOf('standby') !== -1) {
+        return 'Em espera';
+      }
+    }
+
+    if (typeof currentValue === 'number') {
+      if (currentValue > 0) {
+        return 'A carregar';
+      }
+
+      if (currentValue < 0) {
+        return 'Em uso';
+      }
+    }
+
+    return 'Em espera';
+  }
+
+  function deriveStatusClasses(status) {
+    if (status === 'A carregar') {
+      return {
+        badge: 'gray',
+        dot: 'green'
+      };
+    }
+
+    if (status === 'Em uso') {
+      return {
+        badge: 'dark',
+        dot: 'blue'
+      };
+    }
+
+    return {
+      badge: 'gray',
+      dot: 'yellow'
+    };
+  }
+
+  function formatMetric(value, suffix, digits) {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '--';
+    }
+
+    return value.toFixed(digits) + suffix;
+  }
+
+  function setBatteryAsUnavailable(element) {
+    const statusElement = element.querySelector('[data-battery-status]');
+    const percentElement = element.querySelector('[data-battery-percent]');
+    const progressElement = element.querySelector('[data-battery-progress]');
+    const healthValue = element.querySelector('[data-battery-health]');
+    const healthWrap = element.querySelector('[data-battery-health-wrap]');
+    const temperatureValue = element.querySelector('[data-battery-temperature]');
+    const voltageValue = element.querySelector('[data-battery-voltage]');
+    const currentValue = element.querySelector('[data-battery-current]');
+    const stateDot = element.querySelector('[data-battery-state-dot]');
+    const chargeBox = element.querySelector('.charge-box');
+
+    applyText(element, '[data-battery-status]', 'Sem dados');
+    applyText(element, '[data-battery-percent]', '--');
+    applyText(element, '[data-battery-health]', '--');
+    applyText(element, '[data-battery-temperature]', '--');
+    applyText(element, '[data-battery-voltage]', '--');
+    applyText(element, '[data-battery-current]', '--');
+
+    if (progressElement) {
+      progressElement.style.width = '0%';
+    }
+
+    updateClassList(statusElement, ['gray', 'dark'], 'gray');
+    updateClassList(percentElement, ['green', 'yellow', 'orange'], null);
+    updateClassList(healthValue, ['green', 'yellow', 'orange'], null);
+    updateClassList(healthWrap, ['green', 'yellow', 'orange'], null);
+    updateClassList(stateDot, ['green', 'blue', 'yellow'], 'yellow');
+    updateClassList(chargeBox, ['green', 'yellow', 'orange'], null);
+  }
+
+  function latestRecord(payload) {
+    const list = extractList(payload).filter(Boolean);
+    return list.length ? list[list.length - 1] : null;
+  }
+
+  function normalizeBatteryState(config, payload) {
+    const record = latestRecord(payload);
+    if (!record) {
+      return null;
+    }
+
+    const charge = clampPercent(
+      pickNumber(record, ['percentage', 'percent', 'charge_percentage', 'chargePercent', 'battery_percentage', 'soc', 'level'])
+    );
+    const health = healthLabelToPercent(record.health);
+    const temperature = pickNumber(record, ['temperature']);
+    const voltage = pickNumber(record, ['voltage']);
+    const current = pickNumber(record, ['current']);
+    const status = deriveStatus(
+      pickString(record, ['status']),
+      current
+    );
+
+    return {
+      name: config.name,
+      label: config.label,
+      charge: charge,
+      health: health === 0 ? null : health,
+      temperature: temperature,
+      voltage: voltage,
+      current: current,
+      status: status
+    };
+  }
+
+  function applyText(root, selector, value) {
+    const element = root.querySelector(selector);
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  function updateClassList(element, allowedClasses, nextClass) {
+    if (!element) {
+      return;
+    }
+
+    allowedClasses.forEach(function (className) {
+      element.classList.remove(className);
+    });
+
+    if (nextClass) {
+      element.classList.add(nextClass);
+    }
+  }
+
+  function updateBatteryCard(element, state) {
+    const tone = percentTone(state.charge);
+    const statusClasses = deriveStatusClasses(state.status);
+    const statusElement = element.querySelector('[data-battery-status]');
+    const percentElement = element.querySelector('[data-battery-percent]');
+    const progressElement = element.querySelector('[data-battery-progress]');
+    const healthValue = element.querySelector('[data-battery-health]');
+    const healthWrap = element.querySelector('[data-battery-health-wrap]');
+    const temperatureValue = element.querySelector('[data-battery-temperature]');
+    const voltageValue = element.querySelector('[data-battery-voltage]');
+    const currentValue = element.querySelector('[data-battery-current]');
+    const stateDot = element.querySelector('[data-battery-state-dot]');
+    const chargeBox = element.querySelector('.charge-box');
+
+    applyText(element, '[data-battery-status]', state.status);
+    applyText(element, '[data-battery-percent]', Math.round(state.charge) + '%');
+    applyText(element, '[data-battery-health]', state.health === null ? '--' : Math.round(state.health) + '%');
+    applyText(element, '[data-battery-temperature]', formatMetric(state.temperature, '°C', 0));
+    applyText(element, '[data-battery-voltage]', formatMetric(state.voltage, ' V', 1));
+    applyText(element, '[data-battery-current]', formatMetric(state.current, ' A', 1));
+
+    if (progressElement) {
+      progressElement.style.width = state.charge.toFixed(1) + '%';
+    }
+
+    updateClassList(statusElement, ['gray', 'dark'], statusClasses.badge);
+    updateClassList(percentElement, ['green', 'yellow', 'orange'], tone);
+    updateClassList(healthValue, ['green', 'yellow', 'orange'], percentTone(state.health === null ? 0 : state.health));
+    updateClassList(healthWrap, ['green', 'yellow', 'orange'], percentTone(state.health === null ? 0 : state.health));
+    updateClassList(stateDot, ['green', 'blue', 'yellow'], statusClasses.dot);
+    updateClassList(chargeBox, ['green', 'yellow', 'orange'], tone);
+  }
+
+  function updateBatterySummary(states) {
+    const activeName = document.querySelector('[data-battery-active-name]');
+    const activeStatus = document.querySelector('[data-battery-active-status]');
+    const chargingName = document.querySelector('[data-battery-charging-name]');
+    const chargingStatus = document.querySelector('[data-battery-charging-status]');
+
+    if (!activeName && !chargingName) {
+      return;
+    }
+
+    const activeBattery =
+      states.find(function (state) { return state.status === 'Em uso'; }) ||
+      states.slice().sort(function (left, right) { return right.charge - left.charge; })[0];
+    const chargingBattery =
+      states.find(function (state) { return state.status === 'A carregar'; }) ||
+      states.slice().sort(function (left, right) { return left.charge - right.charge; })[0];
+
+    if (activeBattery) {
+      if (activeName) {
+        activeName.textContent = activeBattery.label;
+      }
+      if (activeStatus) {
+        activeStatus.textContent = 'A alimentar o sistema';
+      }
+    }
+
+    if (chargingBattery) {
+      if (chargingName) {
+        chargingName.textContent = chargingBattery.label;
+      }
+      if (chargingStatus) {
+        chargingStatus.textContent = Math.round(chargingBattery.charge) + '% carregada';
+      }
+    }
+  }
+
+  async function refreshBatteries() {
+    try {
+      const responses = await Promise.all(
+        batteryConfigs.map(function (config) {
+          return window.SisaApi.get('/batery/get_batteries_by_name/' + config.name);
+        })
+      );
+
+      const normalizedStates = responses.map(function (response, index) {
+        return {
+          config: batteryConfigs[index],
+          state: normalizeBatteryState(batteryConfigs[index], response)
+        };
+      });
+
+      const states = normalizedStates
+        .map(function (entry) {
+          return entry.state;
+        })
+        .filter(Boolean);
+
+      normalizedStates.forEach(function (entry) {
+        const matchingCards = Array.from(
+          document.querySelectorAll('[data-battery-card="' + entry.config.name + '"], [data-battery-panel="' + entry.config.name + '"]')
+        );
+
+        if (entry.state) {
+          matchingCards.forEach(function (element) {
+            updateBatteryCard(element, entry.state);
+          });
+          return;
+        }
+
+        matchingCards.forEach(function (element) {
+          setBatteryAsUnavailable(element);
+        });
+      });
+
+      updateBatterySummary(states);
+    } catch (error) {
+      console.error('Falha ao atualizar as baterias.', error);
+    }
+  }
+
+  refreshBatteries();
+  window.setInterval(refreshBatteries, refreshIntervalMs);
+});
+
+document.addEventListener('DOMContentLoaded', function () {
   const tabs = Array.from(document.querySelectorAll('.tab-btn[data-range]'));
   if (!tabs.length) {
     return;
