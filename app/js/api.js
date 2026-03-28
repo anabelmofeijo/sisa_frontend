@@ -87,6 +87,22 @@
     },
     delete: function (path, options) {
       return request(path, Object.assign({}, options, { method: 'DELETE' }));
+    },
+    // Alerts API
+    getAlerts: function () {
+      return this.get('/alerts/');
+    },
+    resolveAlert: function (alertId, payload) {
+      return this.put('/alerts/' + alertId + '/resolve', payload);
+    },
+    getAlertsStatistics: function () {
+      return this.get('/alerts/statistics');
+    },
+    sendElevatorStatus: function (floor, isMoving) {
+      return this.post('/alerts/elevator-status', { floor: floor, is_moving: isMoving });
+    },
+    sendBatteryTelemetry: function (telemetry) {
+      return this.post('/alerts/battery-telemetry', telemetry);
     }
   };
 

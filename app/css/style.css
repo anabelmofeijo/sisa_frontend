@@ -157,6 +157,19 @@ html {
       padding: 12px 14px;
     }
 
+    .alerts-main {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .alerts-main .topbar {
+      z-index: 3;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      padding-top: 12px;
+    }
+
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -1319,6 +1332,8 @@ h1 {
       display: grid;
       grid-template-columns: 1.35fr 1fr;
       gap: 12px;
+      align-items: start;
+      height: calc(100vh - 216px);
     }
 
     .alerts-tabs {
@@ -1329,6 +1344,11 @@ h1 {
       padding: 2px;
       gap: 2px;
       margin-bottom: 10px;
+      width: 100%;
+      z-index: 2;
+      position: sticky;
+      top: 136px;
+      background: #e9edf2;
     }
 
     .alerts-tab {
@@ -1349,6 +1369,9 @@ h1 {
     .alerts-list {
       display: grid;
       gap: 10px;
+      overflow-y: auto;
+      max-height: calc(100vh - 310px);
+      padding-right: 6px;
     }
 
     .alert-card {
@@ -1383,6 +1406,22 @@ h1 {
     .alert-card small {
       font-size: 12px;
       color: #6b7280;
+    }
+
+    .resolve-btn {
+      margin-top: 8px;
+      padding: 4px 8px;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .resolve-btn:hover {
+      background: var(--green-soft);
     }
 
     .alert-card.critical {
@@ -1445,7 +1484,15 @@ h1 {
     }
 
     .alert-detail {
-      min-height: 270px;
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 64px);
+      overflow-y: auto;
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid #d9dde3;
+      border-radius: 10px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
     }

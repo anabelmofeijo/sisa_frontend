@@ -922,25 +922,117 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const tabs = Array.from(document.querySelectorAll('.alerts-tab'));
   const filter = document.getElementById('alerts-filter');
-  const cards = Array.from(document.querySelectorAll('.alert-card'));
+  const alertsList = document.getElementById('alerts-list');
   const detailBody = document.getElementById('alert-detail-body');
   const detailEmpty = document.getElementById('alert-detail-empty');
 
   let currentGroup = 'active';
   let currentFilter = 'all';
+  let alertsData = [];
 
-  function matchesFilter(card) {
+  function getLevelClass(level) {
+    switch (level) {
+      case 'critical': return 'critical';
+      case 'warning': return 'medium';
+      case 'info': return 'low';
+      default: return 'low';
+    }
+  }
+
+  function getLevelText(level) {
+    switch (level) {
+      case 'critical': return 'Alto';
+      case 'warning': return 'Médio';
+      case 'info': return 'Baixo';
+      default: return 'Baixo';
+    }
+  }
+
+  function getGroup(alert) {
+    return alert.status === 'resolved' ? 'history' : 'active';
+  }
+
+  function matchesFilter(alert) {
     if (currentFilter === 'all') {
       return true;
     }
-    return card.dataset.level === currentFilter;
+    if (currentFilter === 'resolved') {
+      return alert.status === 'resolved';
+    }
+    if (currentFilter === 'critical') {
+      return alert.level === 'critical';
+    }
+    if (currentFilter === 'medium') {
+      return alert.level === 'warning';
+    }
+    if (currentFilter === 'low') {
+      return alert.level === 'info';
+    }
+    return false;
+  }
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('pt-PT');
+  }
+
+  function renderAlert(alert) {
+    const levelClass = getLevelClass(alert.level);
+    const levelText = getLevelText(alert.level);
+    const group = getGroup(alert);
+    const isVisible = group === currentGroup && matchesFilter(alert);
+    const isResolved = alert.status === 'resolved';
+
+    const alertIdValue = alert.id || alert._id || alert.alert_id || alertId || '';
+
+    const title =
+      (alert.title && String(alert.title).trim()) ||
+      (alert.name && String(alert.name).trim()) ||
+      (alert.subject && String(alert.subject).trim()) ||
+      (alert.message && String(alert.message).trim()) ||
+      'Alerta sem título';
+
+    const description =
+      (alert.description && String(alert.description).trim()) ||
+      (alert.body && String(alert.body).trim()) ||
+      (alert.detail && String(alert.detail).trim()) ||
+      (alert.message && String(alert.message).trim()) ||
+      'Sem descrição disponível';
+
+    const createdAt = alert.created_at || alert.updated_at || alert.timestamp || new Date().toISOString();
+
+    return `
+      <article class="alert-card ${levelClass} ${isVisible ? '' : 'is-hidden'}" data-group="${group}" data-level="${alert.level}" data-title="${title}" data-message="${description}" data-time="${formatDate(createdAt)}" data-status="${levelText}" data-id="${alertIdValue}">
+        <small class="alert-id">ID: ${alertIdValue}</small>
+        <h3>${title} <span class="alert-badge ${levelClass}">${levelText}</span></h3>
+        <p>${description}</p>
+        <small>${formatDate(createdAt)}</small>
+        ${!isResolved ? '<button class="resolve-btn" data-alert-id="' + alertIdValue + '">Resolver</button>' : ''}
+      </article>
+    `;
   }
 
   function renderList() {
+    const html = alertsData.map(renderAlert).join('');
+    alertsList.innerHTML = html;
+
+    // Re-attach event listeners
+    const cards = Array.from(alertsList.querySelectorAll('.alert-card'));
     cards.forEach(function (card) {
-      const isVisible = card.dataset.group === currentGroup && matchesFilter(card);
-      card.classList.toggle('is-hidden', !isVisible);
-      card.classList.remove('active-item');
+      card.addEventListener('click', function () {
+        if (!card.classList.contains('is-hidden')) {
+          selectAlert(card);
+        }
+      });
+    });
+
+    const resolveButtons = Array.from(alertsList.querySelectorAll('.resolve-btn'));
+    resolveButtons.forEach(function (button) {
+      button.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const alertId = button.dataset.alertId;
+        resolveAlert(alertId);
+      });
     });
 
     if (detailBody) {
@@ -953,6 +1045,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function selectAlert(card) {
+    const cards = Array.from(alertsList.querySelectorAll('.alert-card'));
     cards.forEach(function (item) {
       item.classList.remove('active-item');
     });
@@ -973,6 +1066,101 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function loadAlerts() {
+    if (!window.SisaApi) {
+      console.error('API not available');
+      return;
+    }
+
+    window.SisaApi.getAlerts()
+      .then(function (response) {
+        let items = [];
+
+        if (Array.isArray(response)) {
+          items = response;
+        } else if (response) {
+          items = response.data || response.alerts || response.items || response.records || [];
+          if (!Array.isArray(items)) {
+            items = [];
+          }
+        }
+
+        console.log('Alertas carregados:', items.length, 'items');
+        alertsData = items;
+        renderList();
+        updateTabCounts();
+      })
+      .catch(function (error) {
+        console.error('Failed to load alerts:', error);
+        renderList();
+      });
+  }
+
+  function loadStatistics() {
+    if (!window.SisaApi) {
+      return;
+    }
+
+    window.SisaApi.getAlertsStatistics()
+      .then(function (stats) {
+        console.log('Estatísticas recebidas:', stats);
+
+        const criticalCount = stats.critical_count ?? stats.critical ?? stats.criticalCount ?? stats.high ?? 0;
+        const mediumCount = stats.warning_count ?? stats.warning ?? stats.medium ?? stats.mediumCount ?? stats.medium_count ?? 0;
+        const lowCount = stats.info_count ?? stats.info ?? stats.low ?? stats.lowCount ?? stats.info ?? 0;
+        const resolvedCount = stats.resolved_count ?? stats.resolved ?? stats.resolvedCount ?? stats.closed ?? 0;
+
+        console.log('Contadores: críticos=' + criticalCount + ', médios=' + mediumCount + ', baixos=' + lowCount + ', resolvidos=' + resolvedCount);
+
+        document.getElementById('critical-count').textContent = criticalCount;
+        document.getElementById('medium-count').textContent = mediumCount;
+        document.getElementById('low-count').textContent = lowCount;
+        document.getElementById('resolved-count').textContent = resolvedCount;
+      })
+      .catch(function (error) {
+        console.error('Failed to load statistics:', error);
+      });
+  }
+
+  function resolveAlert(alertId) {
+    if (!window.SisaApi) {
+      return;
+    }
+
+    const primaryPayload = { id: Number(alertId), status: 'active' };
+
+    console.log('Tentando resolver alerta ' + alertId + ' com payload:', primaryPayload);
+
+    window.SisaApi.resolveAlert(alertId, primaryPayload)
+      .then(function (response) {
+        console.log('Alerta resolvido com sucesso:', response);
+      })
+      .catch(function (error) {
+        console.error('Erro ao resolver alerta:', error);
+      })
+      .finally(function () {
+        // Atualiza sempre, independente de sucesso ou erro
+        console.log('Recarregando alertas e estatísticas...');
+        loadAlerts();
+        loadStatistics();
+      });
+  }
+
+  function updateTabCounts() {
+    const activeCount = alertsData.filter(a => a.status !== 'resolved').length;
+    const historyCount = alertsData.filter(a => a.status === 'resolved').length;
+
+    const activeTab = tabs.find(t => t.dataset.alertTab === 'active');
+    const historyTab = tabs.find(t => t.dataset.alertTab === 'history');
+
+    if (activeTab) {
+      activeTab.textContent = `Ativos (${activeCount})`;
+    }
+    if (historyTab) {
+      historyTab.textContent = `Histórico (${historyCount})`;
+    }
+  }
+
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       tabs.forEach(function (b) {
@@ -984,14 +1172,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  cards.forEach(function (card) {
-    card.addEventListener('click', function () {
-      if (!card.classList.contains('is-hidden')) {
-        selectAlert(card);
-      }
-    });
-  });
-
   if (filter) {
     filter.addEventListener('change', function () {
       currentFilter = filter.value;
@@ -999,7 +1179,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  renderList();
+  // Load data on page load
+  loadAlerts();
+  loadStatistics();
+
+  // Keep alerts and statistics fresh in near-real time
+  const refreshIntervalMs = 10000;
+  const refreshTimer = window.setInterval(function () {
+    loadAlerts();
+    loadStatistics();
+  }, refreshIntervalMs);
+
+  // Clean up timer when leaving the page (not always needed in SPA but safe)
+  window.addEventListener('beforeunload', function () {
+    window.clearInterval(refreshTimer);
+  });
 });
 
 document.addEventListener('DOMContentLoaded', function () {
