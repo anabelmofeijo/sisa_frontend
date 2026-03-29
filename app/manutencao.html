@@ -86,22 +86,22 @@
       <section class="maintenance-stats-grid">
         <article class="card maintenance-stat green">
           <p>Horas de Operação</p>
-          <strong>8,234</strong>
+          <strong id="maintenance-hours">0</strong>
           <span class="m-stat-icon">◷</span>
         </article>
         <article class="card maintenance-stat blue">
           <p>Viagens Totais</p>
-          <strong>124,587</strong>
+          <strong id="maintenance-trips">0</strong>
           <span class="m-stat-icon">↗</span>
         </article>
         <article class="card maintenance-stat amber">
           <p>Última Manutenção</p>
-          <strong class="small">10 Nov 2024</strong>
+          <strong class="small" id="maintenance-last-date">0</strong>
           <span class="m-stat-icon">⌕</span>
         </article>
         <article class="card maintenance-stat cyan">
           <p>Próxima Manutenção</p>
-          <strong class="small">28 Dez 2024</strong>
+          <strong class="small" id="maintenance-next-date">0</strong>
           <span class="m-stat-icon">⚒</span>
         </article>
       </section>
@@ -109,110 +109,8 @@
       <section class="card maintenance-block">
         <h2>Componentes Monitorados</h2>
         <p class="m-sub">Estado e cronograma de manutenção</p>
-
-        <article class="component-card ok" data-component>
-          <header>
-            <div>
-              <h3>Motor</h3>
-              <p>8234 horas de operação</p>
-            </div>
-            <span class="chip ok">Ótimo</span>
-          </header>
-          <div class="component-grid">
-            <div class="mini-info">
-              <span>Última Manutenção</span>
-              <strong>15/10/2024</strong>
-            </div>
-            <div class="mini-info">
-              <span>Próxima Manutenção</span>
-              <strong>15/01/2025</strong>
-              <em>Atrasada</em>
-            </div>
-            <div class="mini-info progress-box">
-              <span>Confiabilidade</span>
-              <div class="progress"><div class="bar bar-98"></div></div>
-            </div>
-          </div>
-          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
-        </article>
-
-        <article class="component-card ok" data-component>
-          <header>
-            <div>
-              <h3>Inversor</h3>
-              <p>8234 horas de operação</p>
-            </div>
-            <span class="chip ok">Ótimo</span>
-          </header>
-          <div class="component-grid">
-            <div class="mini-info">
-              <span>Última Manutenção</span>
-              <strong>01/11/2024</strong>
-            </div>
-            <div class="mini-info">
-              <span>Próxima Manutenção</span>
-              <strong>01/02/2025</strong>
-              <em>Atrasada</em>
-            </div>
-            <div class="mini-info progress-box">
-              <span>Confiabilidade</span>
-              <div class="progress"><div class="bar bar-96"></div></div>
-            </div>
-          </div>
-          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
-        </article>
-
-        <article class="component-card warn" data-component>
-          <header>
-            <div>
-              <h3>Sistema Regenerativo</h3>
-              <p>8234 horas de operação</p>
-            </div>
-            <span class="chip warn">Atenção</span>
-          </header>
-          <div class="component-grid">
-            <div class="mini-info">
-              <span>Última Manutenção</span>
-              <strong>20/09/2024</strong>
-            </div>
-            <div class="mini-info">
-              <span>Próxima Manutenção</span>
-              <strong>20/12/2024</strong>
-              <em>Urgente</em>
-            </div>
-            <div class="mini-info progress-box">
-              <span>Confiabilidade</span>
-              <div class="progress"><div class="bar bar-74"></div></div>
-            </div>
-          </div>
-          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
-        </article>
-
-        <article class="component-card warn" data-component>
-          <header>
-            <div>
-              <h3>Controlador de Baterias</h3>
-              <p>8234 horas de operação</p>
-            </div>
-            <span class="chip warn">Atenção</span>
-          </header>
-          <div class="component-grid">
-            <div class="mini-info">
-              <span>Última Manutenção</span>
-              <strong>15/08/2024</strong>
-            </div>
-            <div class="mini-info">
-              <span>Próxima Manutenção</span>
-              <strong>28/12/2024</strong>
-              <em>Atrasada</em>
-            </div>
-            <div class="mini-info progress-box">
-              <span>Confiabilidade</span>
-              <div class="progress"><div class="bar bar-94"></div></div>
-            </div>
-          </div>
-          <button class="done-btn" type="button">Marcar Manutenção Concluída</button>
-        </article>
+        <div id="maintenance-components-list"></div>
+        <p class="m-sub" id="maintenance-empty-state" style="display: none;">Sem componentes pendentes na manutenção.</p>
       </section>
 
       <section class="card recurring-errors-card">
@@ -258,5 +156,3 @@
   <script src="js/main.js"></script>
 </body>
 </html>
-
-

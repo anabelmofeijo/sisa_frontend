@@ -146,8 +146,8 @@
           <div class="inner-card">
             <svg class="icon icon-wave" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
             <div>
-              <div class="source-name">Regeneração do elevador</div>
-              <div class="source-note">A alimentar o sistema</div>
+              <div class="source-name" id="dashboard-source-name">Regeneração do elevador</div>
+              <div class="source-note" id="dashboard-source-note">A alimentar o sistema</div>
             </div>
           </div>
         </section>
@@ -160,18 +160,18 @@
           <div class="section-subtitle">Distribuição atual</div>
           <div class="building-row">
             <span>Energia enviada</span>
-            <span class="building-val">2.4 kWh</span>
+            <span class="building-val" id="dashboard-building-val">2.4 kWh</span>
           </div>
           <div class="dest">
             <span>Destino principal</span>
-            <strong>Iluminação</strong>
+            <strong id="dashboard-building-dest">Iluminação</strong>
           </div>
         </section>
       </div>
 
-      <div class="update">
+      <div class="update" id="dashboard-energy-update">
         <svg class="icon" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
-        Atualização automática a cada 10 segundos • Última atualização: 18:49:20
+        <span id="dashboard-energy-update-text">Atualização automática a cada 60 segundos • Última atualização: 18:49:20</span>
       </div>
     </main>
   </div>

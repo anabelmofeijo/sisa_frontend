@@ -1,13 +1,32 @@
 (function (window) {
   const DEFAULT_BASE_URL = 'https://sisa-api-58wf.onrender.com';
+  const LOCAL_API_CANDIDATES = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000'
+  ];
 
   let baseUrl = resolveBaseUrl();
+
+  function isLocalFrontend() {
+    const hostname = window.location && window.location.hostname ? window.location.hostname : '';
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  }
 
   function resolveBaseUrl() {
     const metaTag = document.querySelector('meta[name="sisa-api-base-url"]');
     const metaValue = metaTag ? metaTag.getAttribute('content') : '';
+    const localStorageValue = window.localStorage ? window.localStorage.getItem('sisaApiBaseUrl') : '';
+    const explicitBaseUrl = window.SISA_API_BASE_URL || metaValue || localStorageValue;
 
-    return (window.SISA_API_BASE_URL || metaValue || DEFAULT_BASE_URL).replace(/\/+$/, '');
+    if (explicitBaseUrl) {
+      return explicitBaseUrl.replace(/\/+$/, '');
+    }
+
+    if (isLocalFrontend()) {
+      return LOCAL_API_CANDIDATES[0];
+    }
+
+    return DEFAULT_BASE_URL.replace(/\/+$/, '');
   }
 
   function buildUrl(path) {
@@ -56,8 +75,30 @@
       fetchOptions.body = JSON.stringify(fetchOptions.body);
     }
 
-    const response = await fetch(buildUrl(path), fetchOptions);
-    return parseResponse(response);
+    async function tryFetch(url) {
+      const response = await fetch(url, fetchOptions);
+      return parseResponse(response);
+    }
+
+    const primaryUrl = buildUrl(path);
+
+    try {
+      return await tryFetch(primaryUrl);
+    } catch (error) {
+      if (!isLocalFrontend() || !baseUrl || LOCAL_API_CANDIDATES.indexOf(baseUrl) === -1) {
+        throw error;
+      }
+
+      const fallbackUrl = baseUrl === LOCAL_API_CANDIDATES[0] ? LOCAL_API_CANDIDATES[1] : LOCAL_API_CANDIDATES[0];
+
+      try {
+        const payload = await tryFetch(fallbackUrl + (path.charAt(0) === '/' ? path : '/' + path));
+        baseUrl = fallbackUrl;
+        return payload;
+      } catch (fallbackError) {
+        throw error;
+      }
+    }
   }
 
   const api = {

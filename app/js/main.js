@@ -102,11 +102,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('DOMContentLoaded', function () {
   const batteryCards = Array.from(document.querySelectorAll('[data-battery-card], [data-battery-panel]'));
-  if (!batteryCards.length || !window.SisaApi) {
+  if (!batteryCards.length) {
     return;
   }
 
-  const refreshIntervalMs = 5 * 60 * 1000;
+  const refreshIntervalMs = 10 * 1000;
   const batteryConfigs = [
     { name: 'first_batery', label: 'Bateria A' },
     { name: 'second_batery', label: 'Bateria B' }
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function formatMetric(value, suffix, digits) {
     if (value === null || value === undefined || isNaN(value)) {
-      return '--';
+      return '0' + suffix;
     }
 
     return value.toFixed(digits) + suffix;
@@ -299,11 +299,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const chargeBox = element.querySelector('.charge-box');
 
     applyText(element, '[data-battery-status]', 'Sem dados');
-    applyText(element, '[data-battery-percent]', '--');
-    applyText(element, '[data-battery-health]', '--');
-    applyText(element, '[data-battery-temperature]', '--');
-    applyText(element, '[data-battery-voltage]', '--');
-    applyText(element, '[data-battery-current]', '--');
+    applyText(element, '[data-battery-percent]', '0%');
+    applyText(element, '[data-battery-health]', '0%');
+    applyText(element, '[data-battery-temperature]', '0°C');
+    applyText(element, '[data-battery-voltage]', '0.0 V');
+    applyText(element, '[data-battery-current]', '0.0 A');
 
     if (progressElement) {
       progressElement.style.width = '0%';
@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     applyText(element, '[data-battery-status]', state.status);
     applyText(element, '[data-battery-percent]', Math.round(state.charge) + '%');
-    applyText(element, '[data-battery-health]', state.health === null ? '--' : Math.round(state.health) + '%');
+    applyText(element, '[data-battery-health]', state.health === null ? '0%' : Math.round(state.health) + '%');
     applyText(element, '[data-battery-temperature]', formatMetric(state.temperature, '°C', 0));
     applyText(element, '[data-battery-voltage]', formatMetric(state.voltage, ' V', 1));
     applyText(element, '[data-battery-current]', formatMetric(state.current, ' A', 1));
@@ -442,6 +442,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function resetBatterySummary() {
+    const activeName = document.querySelector('[data-battery-active-name]');
+    const activeStatus = document.querySelector('[data-battery-active-status]');
+    const chargingName = document.querySelector('[data-battery-charging-name]');
+    const chargingStatus = document.querySelector('[data-battery-charging-status]');
+
+    if (activeName) {
+      activeName.textContent = '0';
+    }
+    if (activeStatus) {
+      activeStatus.textContent = '0';
+    }
+    if (chargingName) {
+      chargingName.textContent = '0';
+    }
+    if (chargingStatus) {
+      chargingStatus.textContent = '0% carregada';
+    }
+  }
+
+  if (!window.SisaApi) {
+    batteryConfigs.forEach(function (config) {
+      const matchingCards = Array.from(
+        document.querySelectorAll('[data-battery-card="' + config.name + '"], [data-battery-panel="' + config.name + '"]')
+      );
+
+      matchingCards.forEach(function (element) {
+        setBatteryAsUnavailable(element);
+      });
+    });
+    resetBatterySummary();
+    return;
+  }
+
   async function refreshBatteries() {
     try {
       const responses = await Promise.all(
@@ -482,12 +516,168 @@ document.addEventListener('DOMContentLoaded', function () {
 
       updateBatterySummary(states);
     } catch (error) {
+      batteryConfigs.forEach(function (config) {
+        const matchingCards = Array.from(
+          document.querySelectorAll('[data-battery-card="' + config.name + '"], [data-battery-panel="' + config.name + '"]')
+        );
+
+        matchingCards.forEach(function (element) {
+          setBatteryAsUnavailable(element);
+        });
+      });
+      resetBatterySummary();
       console.error('Falha ao atualizar as baterias.', error);
     }
   }
 
   refreshBatteries();
   window.setInterval(refreshBatteries, refreshIntervalMs);
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const sourceName = document.getElementById('dashboard-source-name');
+  const sourceNote = document.getElementById('dashboard-source-note');
+  const buildingValue = document.getElementById('dashboard-building-val');
+  const buildingDestination = document.getElementById('dashboard-building-dest');
+  const updateText = document.getElementById('dashboard-energy-update-text');
+
+  if (!sourceName || !sourceNote || !buildingValue || !buildingDestination || !updateText) {
+    return;
+  }
+
+  const refreshIntervalMs = 60 * 1000;
+
+  function toNumber(value) {
+    if (typeof value === 'number' && !isNaN(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '');
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? null : parsed;
+    }
+
+    return null;
+  }
+
+  function extractEnergyList(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    if (payload && Array.isArray(payload.items)) {
+      return payload.items;
+    }
+
+    return [];
+  }
+
+  function pickTimestamp(entry) {
+    if (!entry || typeof entry !== 'object') {
+      return null;
+    }
+
+    const timestampKeys = ['updated_at', 'updatedAt', 'created_at', 'createdAt', 'timestamp', 'date', 'measured_at'];
+
+    for (let index = 0; index < timestampKeys.length; index += 1) {
+      const rawValue = entry[timestampKeys[index]];
+      if (!rawValue) {
+        continue;
+      }
+
+      const parsedDate = new Date(rawValue);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate;
+      }
+    }
+
+    return null;
+  }
+
+  function formatKwh(value) {
+    return value === null ? '0.0 kWh' : value.toFixed(1) + ' kWh';
+  }
+
+  function renderSnapshot(snapshot) {
+    if (!snapshot) {
+      sourceName.textContent = 'Fonte indisponível';
+      sourceNote.textContent = '0% da energia atual';
+      buildingValue.textContent = '0.0 kWh';
+      buildingDestination.textContent = 'Não definido';
+      updateText.textContent = 'Atualização automática a cada 60 segundos • Última atualização: 0';
+      return;
+    }
+
+    const dominantSource = snapshot.origin.regeneration >= snapshot.origin.panel
+      ? {
+          name: 'Regeneração do elevador',
+          share: snapshot.origin.regeneration
+        }
+      : {
+          name: 'Painéis solares',
+          share: snapshot.origin.panel
+        };
+
+    sourceName.textContent = dominantSource.name;
+    sourceNote.textContent = dominantSource.share.toFixed(1) + '% da energia atual';
+    buildingValue.textContent = formatKwh(snapshot.consumed);
+    buildingDestination.textContent = dominantSource.name;
+
+    if (snapshot.timestamp) {
+      const timeLabel = snapshot.timestamp.toLocaleTimeString('pt-PT', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      updateText.textContent = 'Atualização automática a cada 60 segundos • Última atualização: ' + timeLabel;
+      return;
+    }
+
+    updateText.textContent = 'Atualização automática a cada 60 segundos • Última atualização: agora';
+  }
+
+  if (!window.SisaApi) {
+    renderSnapshot(null);
+    return;
+  }
+
+  async function refreshDashboardEnergy() {
+    try {
+      const response = await window.SisaApi.get('/energy/ist_energy');
+      const list = extractEnergyList(response).filter(Boolean);
+
+      if (!list.length) {
+        renderSnapshot(null);
+        return;
+      }
+
+      const latestEntry = list[list.length - 1];
+      const energyOrigin = latestEntry.energy_origin || {};
+      const panel = toNumber(energyOrigin.panel) || 0;
+      const regeneration = toNumber(energyOrigin.regeneration) || 0;
+      const totalOrigin = panel + regeneration;
+
+      renderSnapshot({
+        consumed: toNumber(latestEntry.energy_consumed),
+        timestamp: pickTimestamp(latestEntry),
+        origin: {
+          panel: totalOrigin > 0 ? (panel / totalOrigin) * 100 : 0,
+          regeneration: totalOrigin > 0 ? (regeneration / totalOrigin) * 100 : 0
+        }
+      });
+    } catch (error) {
+      console.error('Falha ao atualizar a energia da dashboard.', error);
+      renderSnapshot(null);
+    }
+  }
+
+  refreshDashboardEnergy();
+  window.setInterval(refreshDashboardEnergy, refreshIntervalMs);
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -576,6 +766,7 @@ document.addEventListener('DOMContentLoaded', function () {
     barCenters: [],
     barValues: [],
     labels: [],
+    displayData: null,
     energySnapshot: null
   };
 
@@ -624,16 +815,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateKpis(data) {
     if (state.energySnapshot) {
-      kpiGerada.textContent = state.energySnapshot.generated.toFixed(1) + ' kWh';
-      kpiConsumida.textContent = state.energySnapshot.consumed.toFixed(1) + ' kWh';
-      kpiArmazenada.textContent = state.energySnapshot.stored.toFixed(1) + ' kWh';
+      kpiGerada.textContent = state.energySnapshot.generated === null ? '0.0 kWh' : state.energySnapshot.generated.toFixed(1) + ' kWh';
+      kpiConsumida.textContent = state.energySnapshot.consumed === null ? '0.0 kWh' : state.energySnapshot.consumed.toFixed(1) + ' kWh';
+      kpiArmazenada.textContent = state.energySnapshot.stored === null ? '0.0 kWh' : state.energySnapshot.stored.toFixed(1) + ' kWh';
       return;
     }
 
     if (state.energySnapshot === false) {
-      kpiGerada.textContent = 'Sem dados';
-      kpiConsumida.textContent = 'Sem dados';
-      kpiArmazenada.textContent = 'Sem dados';
+      kpiGerada.textContent = '0.0 kWh';
+      kpiConsumida.textContent = '0.0 kWh';
+      kpiArmazenada.textContent = '0.0 kWh';
       return;
     }
 
@@ -674,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const gPoint = state.generatedPoints[safeIndex];
     const cPoint = state.consumedPoints[safeIndex];
-    const data = chartData[state.currentRange];
+    const data = state.displayData || chartData[state.currentRange];
 
     pointGreen.setAttribute('cx', gPoint.x.toFixed(1));
     pointGreen.setAttribute('cy', gPoint.y.toFixed(1));
@@ -740,8 +931,20 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderCurrentRange(focusIdx) {
-    const data = chartData[state.currentRange];
+    const baseData = chartData[state.currentRange];
+    const data = state.energySnapshot === false
+      ? {
+          labels: baseData.labels.slice(),
+          generated: baseData.labels.map(function () { return 0; }),
+          consumed: baseData.labels.map(function () { return 0; }),
+          sourceReg: 0,
+          sourceSolar: 0,
+          building: baseData.labels.map(function () { return 0; }),
+          focusIndex: baseData.focusIndex
+        }
+      : baseData;
     const initialFocus = focusIdx === undefined ? data.focusIndex : focusIdx;
+    state.displayData = data;
 
     state.generatedPoints = toPoints(data.generated, bounds.lineMax);
     state.consumedPoints = toPoints(data.consumed, bounds.lineMax);
@@ -759,8 +962,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (state.energySnapshot === false) {
       sourceRegFill.style.width = '0%';
       sourceSolFill.style.width = '0%';
-      sourceRegLabel.textContent = 'Sem dados';
-      sourceSolLabel.textContent = 'Sem dados';
+      sourceRegLabel.textContent = '0%';
+      sourceSolLabel.textContent = '0%';
     } else {
       sourceRegFill.style.width = data.sourceReg.toFixed(1) + '%';
       sourceSolFill.style.width = data.sourceSolar.toFixed(1) + '%';
@@ -797,13 +1000,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const energyOrigin = entry.energy_origin || {};
     const panel = toNumber(energyOrigin.panel) || 0;
     const regeneration = toNumber(energyOrigin.regeneration) || 0;
-    const other = toNumber(energyOrigin.additionalProp3) || 0;
-    const totalOrigin = panel + regeneration + other;
+    const generatedRaw = toNumber(entry.energy_generated);
+    const consumedRaw = toNumber(entry.energy_consumed);
+    const storedRaw = toNumber(entry.energy_stored);
+    const totalOrigin = panel + regeneration;
 
     return {
-      generated: toNumber(entry.energy_generated) || 0,
-      consumed: toNumber(entry.energy_consumed) || 0,
-      stored: toNumber(entry.energy_stored) || 0,
+      generated: generatedRaw,
+      consumed: consumedRaw,
+      stored: storedRaw,
       origin: {
         panel: totalOrigin > 0 ? (panel / totalOrigin) * 100 : 0,
         regeneration: totalOrigin > 0 ? (regeneration / totalOrigin) * 100 : 0
@@ -908,10 +1113,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  if (!window.SisaApi) {
+    state.energySnapshot = false;
+    applyRange('daily');
+    return;
+  }
+
   applyRange('daily');
   startLiveUpdates();
   refreshEnergySnapshot();
-  window.setInterval(refreshEnergySnapshot, 5 * 60 * 1000);
+  window.setInterval(refreshEnergySnapshot, 60 * 1000);
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -929,6 +1140,26 @@ document.addEventListener('DOMContentLoaded', function () {
   let currentGroup = 'active';
   let currentFilter = 'all';
   let alertsData = [];
+
+  function setAlertStatistics(counts) {
+    const criticalElement = document.getElementById('critical-count');
+    const mediumElement = document.getElementById('medium-count');
+    const lowElement = document.getElementById('low-count');
+    const resolvedElement = document.getElementById('resolved-count');
+
+    if (criticalElement) {
+      criticalElement.textContent = String(counts.critical || 0);
+    }
+    if (mediumElement) {
+      mediumElement.textContent = String(counts.medium || 0);
+    }
+    if (lowElement) {
+      lowElement.textContent = String(counts.low || 0);
+    }
+    if (resolvedElement) {
+      resolvedElement.textContent = String(counts.resolved || 0);
+    }
+  }
 
   function getLevelClass(level) {
     switch (level) {
@@ -1069,6 +1300,9 @@ document.addEventListener('DOMContentLoaded', function () {
   function loadAlerts() {
     if (!window.SisaApi) {
       console.error('API not available');
+      alertsData = [];
+      renderList();
+      updateTabCounts();
       return;
     }
 
@@ -1092,12 +1326,15 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(function (error) {
         console.error('Failed to load alerts:', error);
+        alertsData = [];
         renderList();
+        updateTabCounts();
       });
   }
 
   function loadStatistics() {
     if (!window.SisaApi) {
+      setAlertStatistics({ critical: 0, medium: 0, low: 0, resolved: 0 });
       return;
     }
 
@@ -1112,12 +1349,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Contadores: críticos=' + criticalCount + ', médios=' + mediumCount + ', baixos=' + lowCount + ', resolvidos=' + resolvedCount);
 
-        document.getElementById('critical-count').textContent = criticalCount;
-        document.getElementById('medium-count').textContent = mediumCount;
-        document.getElementById('low-count').textContent = lowCount;
-        document.getElementById('resolved-count').textContent = resolvedCount;
+        setAlertStatistics({
+          critical: criticalCount,
+          medium: mediumCount,
+          low: lowCount,
+          resolved: resolvedCount
+        });
       })
       .catch(function (error) {
+        setAlertStatistics({ critical: 0, medium: 0, low: 0, resolved: 0 });
         console.error('Failed to load statistics:', error);
       });
   }
@@ -1202,30 +1442,277 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  const buttons = Array.from(document.querySelectorAll('.done-btn'));
-  buttons.forEach(function (button) {
-    button.addEventListener('click', function () {
-      const card = button.closest('[data-component]');
-      if (!card) {
-        return;
-      }
+  const componentsList = document.getElementById('maintenance-components-list');
+  const emptyState = document.getElementById('maintenance-empty-state');
+  const hoursElement = document.getElementById('maintenance-hours');
+  const tripsElement = document.getElementById('maintenance-trips');
+  const lastDateElement = document.getElementById('maintenance-last-date');
+  const nextDateElement = document.getElementById('maintenance-next-date');
+  const lastCompletedStorageKey = 'sisaMaintenanceLastCompletedAt';
 
-      button.classList.add('is-done');
-      button.textContent = 'Manutenção Concluída';
+  if (!componentsList) {
+    return;
+  }
 
-      const badge = card.querySelector('.chip');
-      if (badge) {
-        badge.classList.remove('warn');
-        badge.classList.add('ok');
-        badge.textContent = 'Concluído';
-      }
+  function toNumber(value) {
+    if (typeof value === 'number' && !isNaN(value)) {
+      return value;
+    }
 
-      const delay = card.querySelector('em');
-      if (delay) {
-        delay.textContent = 'Atualizado agora';
-      }
+    if (typeof value === 'string') {
+      const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '');
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? null : parsed;
+    }
+
+    return null;
+  }
+
+  function formatInteger(value) {
+    const safeValue = toNumber(value) || 0;
+    return safeValue.toLocaleString('pt-PT');
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return '--';
+    }
+
+    const parsed = new Date(value);
+    if (isNaN(parsed.getTime())) {
+      return '--';
+    }
+
+    return parsed.toLocaleDateString('pt-PT', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
     });
+  }
+
+  function statusMeta(item) {
+    const status = item && item.status ? String(item.status).toLowerCase() : '';
+    const isCompleted = Boolean(item && item.completed_at);
+    const isOverdue = Boolean(item && item.is_overdue);
+
+    if (isCompleted) {
+      return { card: 'ok', chip: 'ok', label: 'Concluído', note: 'Atualizado' };
+    }
+
+    if (status === 'critical' || isOverdue) {
+      return { card: 'warn', chip: 'warn', label: 'Atenção', note: 'Atrasada' };
+    }
+
+    if (status === 'warning') {
+      return { card: 'warn', chip: 'warn', label: 'Atenção', note: 'Agendada' };
+    }
+
+    return { card: 'ok', chip: 'ok', label: 'Ótimo', note: 'Agendada' };
+  }
+
+  function componentTitle(item) {
+    const notes = item && item.notes ? String(item.notes).trim() : '';
+    if (notes && notes.toLowerCase() !== 'concluída pelo técnico' && notes.toLowerCase() !== 'concluida pelo tecnico') {
+      return notes;
+    }
+
+    return 'Componente #' + item.component_id;
+  }
+
+  function reliabilityValue(item) {
+    const value = toNumber(item && item.reliability_percent);
+    if (value === null) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(100, value));
+  }
+
+  function renderStats(items) {
+    const totalHours = items.reduce(function (acc, item) {
+      return acc + (toNumber(item.operating_hours) || 0);
+    }, 0);
+
+    const totalTrips = items.reduce(function (acc, item) {
+      return acc + (toNumber(item.total_trips) || 0);
+    }, 0);
+
+    const lastDates = items
+      .map(function (item) { return item.last_maintenance_date; })
+      .filter(Boolean)
+      .map(function (value) { return new Date(value); })
+      .filter(function (value) { return !isNaN(value.getTime()); });
+    const storedLastCompleted = localStorage.getItem(lastCompletedStorageKey);
+    if (storedLastCompleted) {
+      const storedDate = new Date(storedLastCompleted);
+      if (!isNaN(storedDate.getTime())) {
+        lastDates.push(storedDate);
+      }
+    }
+
+    const nextDates = items
+      .map(function (item) { return item.next_maintenance_date || item.scheduled_date; })
+      .filter(Boolean)
+      .map(function (value) { return new Date(value); })
+      .filter(function (value) { return !isNaN(value.getTime()); });
+
+    hoursElement.textContent = formatInteger(totalHours);
+    tripsElement.textContent = formatInteger(totalTrips);
+    lastDateElement.textContent = lastDates.length ? formatDate(new Date(Math.max.apply(null, lastDates))) : '--';
+    nextDateElement.textContent = nextDates.length ? formatDate(new Date(Math.min.apply(null, nextDates))) : '--';
+  }
+
+  function renderComponents(items) {
+    componentsList.innerHTML = '';
+
+    if (!items.length) {
+      if (emptyState) {
+        emptyState.style.display = 'block';
+      }
+      renderStats([]);
+      return;
+    }
+
+    if (emptyState) {
+      emptyState.style.display = 'none';
+    }
+
+    renderStats(items);
+
+    items.forEach(function (item) {
+      const meta = statusMeta(item);
+      const reliability = reliabilityValue(item);
+      const article = document.createElement('article');
+      article.className = 'component-card ' + meta.card;
+      article.setAttribute('data-component', '');
+      article.setAttribute('data-maintenance-id', String(item.id));
+
+      article.innerHTML =
+        '<header>' +
+          '<div>' +
+            '<h3>' + componentTitle(item) + '</h3>' +
+            '<p>' + formatInteger(item.operating_hours) + ' horas de operação</p>' +
+          '</div>' +
+          '<span class="chip ' + meta.chip + '">' + meta.label + '</span>' +
+        '</header>' +
+        '<div class="component-grid">' +
+          '<div class="mini-info">' +
+            '<span>Última Manutenção</span>' +
+            '<strong>' + formatDate(item.last_maintenance_date) + '</strong>' +
+          '</div>' +
+          '<div class="mini-info">' +
+            '<span>Próxima Manutenção</span>' +
+            '<strong>' + formatDate(item.next_maintenance_date || item.scheduled_date) + '</strong>' +
+            '<em>' + meta.note + '</em>' +
+          '</div>' +
+          '<div class="mini-info progress-box">' +
+            '<span>Confiabilidade</span>' +
+            '<div class="progress"><div class="bar" style="width:' + reliability.toFixed(1) + '%"></div></div>' +
+          '</div>' +
+        '</div>' +
+        '<button class="done-btn" type="button">Marcar Manutenção Concluída</button>';
+
+      componentsList.appendChild(article);
+    });
+  }
+
+  function normalizeMaintenanceResponse(response) {
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (response && Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    if (response && Array.isArray(response.components)) {
+      return response.components;
+    }
+
+    if (response && Array.isArray(response.items)) {
+      return response.items;
+    }
+
+    return [];
+  }
+
+  async function loadMaintenance() {
+    try {
+      const response = await window.SisaApi.get('/maintenance/components');
+      const items = normalizeMaintenanceResponse(response);
+
+      renderComponents(items);
+    } catch (error) {
+      componentsList.innerHTML = '';
+      if (emptyState) {
+        emptyState.style.display = 'block';
+        emptyState.textContent = 'Não foi possível carregar os dados de manutenção.';
+      }
+      renderStats([]);
+      if (lastDateElement) {
+        lastDateElement.textContent = '0';
+      }
+      if (nextDateElement) {
+        nextDateElement.textContent = '0';
+      }
+      console.error('Erro ao carregar manutenção:', error);
+    }
+  }
+
+  if (!window.SisaApi) {
+    componentsList.innerHTML = '';
+    if (emptyState) {
+      emptyState.style.display = 'block';
+      emptyState.textContent = 'Não foi possível carregar os dados de manutenção.';
+    }
+    renderStats([]);
+    if (lastDateElement) {
+      lastDateElement.textContent = '0';
+    }
+    if (nextDateElement) {
+      nextDateElement.textContent = '0';
+    }
+    return;
+  }
+
+  componentsList.addEventListener('click', async function (event) {
+    const button = event.target.closest('.done-btn');
+    if (!button) {
+      return;
+    }
+
+    const card = button.closest('[data-maintenance-id]');
+    if (!card) {
+      return;
+    }
+
+    const maintenanceId = card.getAttribute('data-maintenance-id');
+    if (!maintenanceId) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'A concluir...';
+
+    try {
+      const completed = await window.SisaApi.post('/maintenance/components/' + maintenanceId + '/complete', {
+        completed_at: new Date().toISOString()
+      });
+
+      if (completed && completed.completed_at) {
+        localStorage.setItem(lastCompletedStorageKey, completed.completed_at);
+      }
+
+      await loadMaintenance();
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = 'Marcar Manutenção Concluída';
+      window.alert('Não foi possível concluir a manutenção.');
+    }
   });
+
+  loadMaintenance();
+  window.setInterval(loadMaintenance, 5 * 60 * 1000);
 });
 
 document.addEventListener('DOMContentLoaded', function () {
