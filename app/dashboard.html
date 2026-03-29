@@ -92,9 +92,13 @@
           <svg class="icon icon-status" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
           Estado do Elevador
         </div>
-        <div class="status-sub">
+        <div class="status-sub" id="dashboard-elevator-status">
           <span class="dot"></span>
-          Em funcionamento
+          A carregar estado...
+        </div>
+        <div class="status-floor-card" id="dashboard-elevator-floor-card">
+          <div class="status-floor-label">Andar atual</div>
+          <div class="status-floor-value" id="dashboard-elevator-floor">--</div>
         </div>
       </section>
 

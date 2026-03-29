@@ -131,6 +131,50 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+  const statusElement = document.getElementById('dashboard-elevator-status');
+  const floorElement = document.getElementById('dashboard-elevator-floor');
+
+  if (!statusElement || !floorElement) {
+    return;
+  }
+
+  const refreshIntervalMs = 10 * 1000;
+
+  function renderElevatorStatus(payload) {
+    const statusText = payload && payload.is_moving ? 'Em movimento' : 'Parado';
+    const floorText = payload && typeof payload.floor === 'number'
+      ? String(payload.floor)
+      : '--';
+
+    statusElement.innerHTML = '<span class="dot"></span>' + statusText;
+    floorElement.textContent = floorText;
+  }
+
+  function renderElevatorUnavailable() {
+    statusElement.innerHTML = '<span class="dot"></span>Sem dados';
+    floorElement.textContent = '--';
+  }
+
+  if (!window.SisaApi || typeof window.SisaApi.getElevatorStatus !== 'function') {
+    renderElevatorUnavailable();
+    return;
+  }
+
+  async function refreshElevatorStatus() {
+    try {
+      const response = await window.SisaApi.getElevatorStatus();
+      renderElevatorStatus(response);
+    } catch (error) {
+      console.error('Falha ao atualizar o estado do elevador na dashboard.', error);
+      renderElevatorUnavailable();
+    }
+  }
+
+  refreshElevatorStatus();
+  window.setInterval(refreshElevatorStatus, refreshIntervalMs);
+});
+
+document.addEventListener('DOMContentLoaded', function () {
   const batteryCards = Array.from(document.querySelectorAll('[data-battery-card], [data-battery-panel]'));
   if (!batteryCards.length) {
     return;

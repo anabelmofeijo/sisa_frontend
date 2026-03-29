@@ -139,6 +139,9 @@
     getAlertsStatistics: function () {
       return this.get('/alerts/statistics');
     },
+    getElevatorStatus: function () {
+      return this.get('/alerts/elevator-status');
+    },
     sendElevatorStatus: function (floor, isMoving) {
       return this.post('/alerts/elevator-status', { floor: floor, is_moving: isMoving });
     },
