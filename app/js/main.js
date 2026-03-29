@@ -1,3 +1,33 @@
+function formatKwh(value) {
+  return value === null ? '0.000 kWh' : value.toFixed(3) + ' kWh';
+}
+
+function formatEnergyValue(value) {
+  return value === null ? '0.000' : value.toFixed(3);
+}
+
+function pickTimestamp(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  const timestampKeys = ['updated_at', 'updatedAt', 'created_at', 'createdAt', 'timestamp', 'date', 'measured_at'];
+
+  for (let index = 0; index < timestampKeys.length; index += 1) {
+    const rawValue = entry[timestampKeys[index]];
+    if (!rawValue) {
+      continue;
+    }
+
+    const parsedDate = new Date(rawValue);
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    }
+  }
+
+  return null;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const logoutButtons = Array.from(document.querySelectorAll('.logout'));
   logoutButtons.forEach(function (button) {
@@ -577,37 +607,11 @@ document.addEventListener('DOMContentLoaded', function () {
     return [];
   }
 
-  function pickTimestamp(entry) {
-    if (!entry || typeof entry !== 'object') {
-      return null;
-    }
-
-    const timestampKeys = ['updated_at', 'updatedAt', 'created_at', 'createdAt', 'timestamp', 'date', 'measured_at'];
-
-    for (let index = 0; index < timestampKeys.length; index += 1) {
-      const rawValue = entry[timestampKeys[index]];
-      if (!rawValue) {
-        continue;
-      }
-
-      const parsedDate = new Date(rawValue);
-      if (!isNaN(parsedDate.getTime())) {
-        return parsedDate;
-      }
-    }
-
-    return null;
-  }
-
-  function formatKwh(value) {
-    return value === null ? '0.0 kWh' : value.toFixed(1) + ' kWh';
-  }
-
   function renderSnapshot(snapshot) {
     if (!snapshot) {
       sourceName.textContent = 'Fonte indisponível';
       sourceNote.textContent = '0% da energia atual';
-      buildingValue.textContent = '0.0 kWh';
+      buildingValue.textContent = '0.000 kWh';
       buildingDestination.textContent = 'Não definido';
       updateText.textContent = 'Atualização automática a cada 60 segundos • Última atualização: 0';
       return;
@@ -722,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function () {
     daily: {
       labels: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'],
       generated: [1.1, 0.6, 2.7, 5.8, 7.4, 6.2, 8.1, 4.5],
-      consumed: [0.9, 0.5, 1.9, 4.2, 5.1, 4.8, 6.1, 3.4],
+      stored: [0.9, 0.5, 1.9, 4.2, 5.1, 4.8, 6.1, 3.4],
       sourceReg: 58.2,
       sourceSolar: 41.8,
       building: [0.3, 0.3, 0.7, 1.6, 2.4, 1.4, 1.9, 1.0],
@@ -731,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function () {
     weekly: {
       labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom', 'Media'],
       generated: [4.1, 6.8, 7.5, 5.9, 6.4, 4.7, 3.8, 5.6],
-      consumed: [3.4, 5.1, 5.8, 4.7, 5.2, 4.2, 3.2, 4.5],
+      stored: [3.4, 5.1, 5.8, 4.7, 5.2, 4.2, 3.2, 4.5],
       sourceReg: 54.0,
       sourceSolar: 46.0,
       building: [1.2, 1.6, 1.9, 1.4, 1.7, 1.1, 0.9, 1.4],
@@ -740,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function () {
     monthly: {
       labels: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'],
       generated: [3.5, 4.4, 6.2, 7.9, 6.8, 7.3, 6.1, 5.2],
-      consumed: [2.8, 3.4, 4.7, 5.6, 5.0, 5.3, 4.5, 3.9],
+      stored: [2.8, 3.4, 4.7, 5.6, 5.0, 5.3, 4.5, 3.9],
       sourceReg: 51.7,
       sourceSolar: 48.3,
       building: [1.0, 1.2, 1.5, 1.9, 2.1, 1.8, 1.4, 1.2],
@@ -762,11 +766,12 @@ document.addEventListener('DOMContentLoaded', function () {
     currentRange: 'daily',
     currentIndex: 0,
     generatedPoints: [],
-    consumedPoints: [],
+    storedPoints: [],
     barCenters: [],
     barValues: [],
     labels: [],
     displayData: null,
+    apiChartData: null,
     energySnapshot: null
   };
 
@@ -794,6 +799,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 0);
   }
 
+  function scaleMax(values) {
+    const maxValue = values.reduce(function (acc, value) {
+      return Math.max(acc, value || 0);
+    }, 0);
+
+    if (maxValue <= 0) {
+      return 1;
+    }
+
+    return maxValue < 1 ? maxValue * 1.25 : maxValue * 1.15;
+  }
+
   function toPoints(values, maxValue) {
     const step = (bounds.xMax - bounds.xMin) / (values.length - 1);
     return values.map(function (value, index) {
@@ -815,26 +832,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateKpis(data) {
     if (state.energySnapshot) {
-      kpiGerada.textContent = state.energySnapshot.generated === null ? '0.0 kWh' : state.energySnapshot.generated.toFixed(1) + ' kWh';
-      kpiConsumida.textContent = state.energySnapshot.consumed === null ? '0.0 kWh' : state.energySnapshot.consumed.toFixed(1) + ' kWh';
-      kpiArmazenada.textContent = state.energySnapshot.stored === null ? '0.0 kWh' : state.energySnapshot.stored.toFixed(1) + ' kWh';
+      kpiGerada.textContent = formatKwh(state.energySnapshot.generated);
+      kpiConsumida.textContent = formatKwh(state.energySnapshot.consumed);
+      kpiArmazenada.textContent = formatKwh(state.energySnapshot.stored);
       return;
     }
 
-    if (state.energySnapshot === false) {
-      kpiGerada.textContent = '0.0 kWh';
-      kpiConsumida.textContent = '0.0 kWh';
-      kpiArmazenada.textContent = '0.0 kWh';
-      return;
-    }
-
-    const totalGenerated = sum(data.generated);
-    const totalConsumed = sum(data.consumed);
-    const stored = Math.max((totalGenerated - totalConsumed) * 0.85 + 7, 0);
-
-    kpiGerada.textContent = totalGenerated.toFixed(1) + ' kWh';
-    kpiConsumida.textContent = totalConsumed.toFixed(1) + ' kWh';
-    kpiArmazenada.textContent = stored.toFixed(1) + ' kWh';
+    kpiGerada.textContent = '0.000 kWh';
+    kpiConsumida.textContent = '0.000 kWh';
+    kpiArmazenada.textContent = '0.000 kWh';
   }
 
   function updateBarsFocus(index) {
@@ -864,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function () {
     state.currentIndex = safeIndex;
 
     const gPoint = state.generatedPoints[safeIndex];
-    const cPoint = state.consumedPoints[safeIndex];
+    const cPoint = state.storedPoints[safeIndex];
     const data = state.displayData || chartData[state.currentRange];
 
     pointGreen.setAttribute('cx', gPoint.x.toFixed(1));
@@ -879,12 +885,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tooltip.style.left = ((gPoint.x / bounds.svgWidth) * 100).toFixed(2) + '%';
     tipTime.textContent = data.labels[safeIndex];
-    tipGreen.textContent = 'Gerada : ' + data.generated[safeIndex].toFixed(1);
-    tipBlue.textContent = 'Consumida : ' + data.consumed[safeIndex].toFixed(1);
+    tipGreen.textContent = 'Gerada : ' + formatEnergyValue(data.generated[safeIndex]);
+    tipBlue.textContent = 'Armazenada : ' + formatEnergyValue(data.stored[safeIndex]);
 
   }
 
-  function renderBars(labels, values, focusIdx) {
+  function renderBars(labels, values, focusIdx, maxValue) {
     if (!barsGroup || !barsLabels) {
       return;
     }
@@ -904,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function () {
     barsLabels.innerHTML = '';
 
     values.forEach(function (value, index) {
-      const h = (value / bounds.barMax) * (yMax - yMin);
+      const h = (value / maxValue) * (yMax - yMin);
       const x = xMin + index * step + (step - barWidth) / 2;
       const y = yMax - h;
 
@@ -931,12 +937,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderCurrentRange(focusIdx) {
-    const baseData = chartData[state.currentRange];
+    const baseData = state.apiChartData && state.apiChartData[state.currentRange]
+      ? state.apiChartData[state.currentRange]
+      : chartData[state.currentRange];
     const data = state.energySnapshot === false
       ? {
           labels: baseData.labels.slice(),
           generated: baseData.labels.map(function () { return 0; }),
-          consumed: baseData.labels.map(function () { return 0; }),
+          stored: baseData.labels.map(function () { return 0; }),
           sourceReg: 0,
           sourceSolar: 0,
           building: baseData.labels.map(function () { return 0; }),
@@ -946,13 +954,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const initialFocus = focusIdx === undefined ? data.focusIndex : focusIdx;
     state.displayData = data;
 
-    state.generatedPoints = toPoints(data.generated, bounds.lineMax);
-    state.consumedPoints = toPoints(data.consumed, bounds.lineMax);
+    const lineMax = scaleMax(data.generated.concat(data.stored));
+    const barMax = scaleMax(data.building);
+
+    state.generatedPoints = toPoints(data.generated, lineMax);
+    state.storedPoints = toPoints(data.stored, lineMax);
 
     chartLineGreen.setAttribute('d', linePath(state.generatedPoints));
-    chartLineBlue.setAttribute('d', linePath(state.consumedPoints));
+    chartLineBlue.setAttribute('d', linePath(state.storedPoints));
     chartAreaGreen.setAttribute('d', areaPath(state.generatedPoints));
-    chartAreaBlue.setAttribute('d', areaPath(state.consumedPoints));
+    chartAreaBlue.setAttribute('d', areaPath(state.storedPoints));
 
     if (state.energySnapshot) {
       sourceRegFill.style.width = state.energySnapshot.origin.regeneration.toFixed(1) + '%';
@@ -972,7 +983,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     updateKpis(data);
-    renderBars(data.labels, data.building, initialFocus);
+    renderBars(data.labels, data.building, initialFocus, barMax);
     updateLineFocus(initialFocus);
   }
 
@@ -1009,10 +1020,86 @@ document.addEventListener('DOMContentLoaded', function () {
       generated: generatedRaw,
       consumed: consumedRaw,
       stored: storedRaw,
+      timestamp: pickTimestamp(entry),
       origin: {
         panel: totalOrigin > 0 ? (panel / totalOrigin) * 100 : 0,
         regeneration: totalOrigin > 0 ? (regeneration / totalOrigin) * 100 : 0
       }
+    };
+  }
+
+  function averageChunk(chunk) {
+    if (!chunk.length) {
+      return {
+        generated: 0,
+        consumed: 0,
+        stored: 0,
+        timestamp: null
+      };
+    }
+
+    const totals = chunk.reduce(function (acc, entry) {
+      acc.generated += entry.generated || 0;
+      acc.consumed += entry.consumed || 0;
+      acc.stored += entry.stored || 0;
+      acc.timestamp = entry.timestamp || acc.timestamp;
+      return acc;
+    }, {
+      generated: 0,
+      consumed: 0,
+      stored: 0,
+      timestamp: null
+    });
+
+    return {
+      generated: totals.generated / chunk.length,
+      consumed: totals.consumed / chunk.length,
+      stored: totals.stored / chunk.length,
+      timestamp: totals.timestamp
+    };
+  }
+
+  function buildBuckets(history, bucketCount, windowSize, fallbackPrefix) {
+    const result = [];
+    const maxLength = bucketCount * windowSize;
+    const recentHistory = history.slice(-maxLength);
+
+    for (let bucketIndex = 0; bucketIndex < bucketCount; bucketIndex += 1) {
+      const end = recentHistory.length - ((bucketCount - bucketIndex - 1) * windowSize);
+      const start = Math.max(0, end - windowSize);
+      const chunk = end > 0 ? recentHistory.slice(start, end) : [];
+      result.push(averageChunk(chunk));
+    }
+
+    return {
+      labels: result.map(function (entry, index) {
+        if (entry.timestamp) {
+          return entry.timestamp.toLocaleTimeString('pt-PT', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+
+        return fallbackPrefix + ' ' + (index + 1);
+      }),
+      generated: result.map(function (entry) { return entry.generated; }),
+      stored: result.map(function (entry) { return entry.stored; }),
+      sourceReg: history.length && history[history.length - 1].origin ? history[history.length - 1].origin.regeneration : 0,
+      sourceSolar: history.length && history[history.length - 1].origin ? history[history.length - 1].origin.panel : 0,
+      building: result.map(function (entry) { return entry.consumed; }),
+      focusIndex: Math.max(result.length - 1, 0)
+    };
+  }
+
+  function buildApiChartData(history) {
+    if (!history.length) {
+      return null;
+    }
+
+    return {
+      daily: buildBuckets(history, 8, 1, 'R'),
+      weekly: buildBuckets(history, 8, 4, 'B'),
+      monthly: buildBuckets(history, 8, 8, 'S')
     };
   }
 
@@ -1026,14 +1113,18 @@ document.addEventListener('DOMContentLoaded', function () {
       const list = extractEnergyList(response).filter(Boolean);
       if (!list.length) {
         state.energySnapshot = false;
+        state.apiChartData = null;
         renderCurrentRange(state.currentIndex);
         return;
       }
 
-      state.energySnapshot = normalizeEnergySnapshot(list[list.length - 1]);
+      const normalizedHistory = list.map(normalizeEnergySnapshot).filter(Boolean);
+      state.apiChartData = buildApiChartData(normalizedHistory);
+      state.energySnapshot = normalizedHistory[normalizedHistory.length - 1];
       renderCurrentRange(state.currentIndex);
     } catch (error) {
       state.energySnapshot = false;
+      state.apiChartData = null;
       renderCurrentRange(state.currentIndex);
       console.error('Falha ao atualizar energia.', error);
     }
@@ -1057,30 +1148,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const rect = container.getBoundingClientRect();
     const ratio = clamp((event.clientX - rect.left) / rect.width, 0, 1);
     return Math.round(ratio * (length - 1));
-  }
-
-  function startLiveUpdates() {
-    setInterval(function () {
-      const data = chartData[state.currentRange];
-
-      data.generated = data.generated.map(function (value) {
-        return clamp(value + (Math.random() - 0.5) * 0.28, 0.4, 11.6);
-      });
-
-      data.consumed = data.consumed.map(function (value, idx) {
-        const maxAllowed = Math.max(data.generated[idx] - 0.2, 0.3);
-        return clamp(value + (Math.random() - 0.5) * 0.22, 0.3, maxAllowed);
-      });
-
-      data.building = data.building.map(function (value) {
-        return clamp(value + (Math.random() - 0.5) * 0.18, 0.2, bounds.barMax);
-      });
-
-      data.sourceReg = clamp(data.sourceReg + (Math.random() - 0.5) * 0.8, 45, 65);
-      data.sourceSolar = 100 - data.sourceReg;
-
-      renderCurrentRange(state.currentIndex);
-    }, 4500);
   }
 
   tabs.forEach(function (tab) {
@@ -1120,7 +1187,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   applyRange('daily');
-  startLiveUpdates();
   refreshEnergySnapshot();
   window.setInterval(refreshEnergySnapshot, 60 * 1000);
 });
