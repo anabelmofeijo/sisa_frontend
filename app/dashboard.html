@@ -96,10 +96,6 @@
           <span class="dot"></span>
           A carregar estado...
         </div>
-        <div class="status-floor-card" id="dashboard-elevator-floor-card">
-          <div class="status-floor-label">Andar atual</div>
-          <div class="status-floor-value" id="dashboard-elevator-floor">--</div>
-        </div>
       </section>
 
       <div class="grid-2">
@@ -116,9 +112,15 @@
             <span class="big-percent green" data-battery-percent>80%</span>
           </div>
           <div class="progress"><div class="bar bar-80" data-battery-progress></div></div>
-          <div class="health green" data-battery-health-wrap>
-            <span>Saúde da bateria</span>
-            <strong data-battery-health>95%</strong>
+          <div class="battery-meta-row green" data-battery-meta-row>
+            <div class="battery-meta-pill">
+              <span>Voltagem</span>
+              <strong data-battery-voltage>48.2 V</strong>
+            </div>
+            <div class="battery-meta-pill">
+              <span>Corrente</span>
+              <strong data-battery-current>12 A</strong>
+            </div>
           </div>
         </section>
 
@@ -135,9 +137,15 @@
             <span class="big-percent yellow" data-battery-percent>44%</span>
           </div>
           <div class="progress"><div class="bar bar-44" data-battery-progress></div></div>
-          <div class="health yellow" data-battery-health-wrap>
-            <span>Saúde da bateria</span>
-            <strong data-battery-health>92%</strong>
+          <div class="battery-meta-row yellow" data-battery-meta-row>
+            <div class="battery-meta-pill">
+              <span>Voltagem</span>
+              <strong data-battery-voltage>47.8 V</strong>
+            </div>
+            <div class="battery-meta-pill">
+              <span>Corrente</span>
+              <strong data-battery-current>-18 A</strong>
+            </div>
           </div>
         </section>
 

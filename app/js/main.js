@@ -132,46 +132,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('DOMContentLoaded', function () {
   const statusElement = document.getElementById('dashboard-elevator-status');
-  const floorElement = document.getElementById('dashboard-elevator-floor');
 
-  if (!statusElement || !floorElement) {
+  if (!statusElement) {
     return;
   }
 
-  const refreshIntervalMs = 10 * 1000;
-
-  function renderElevatorStatus(payload) {
-    const statusText = payload && payload.is_moving ? 'Em movimento' : 'Parado';
-    const floorText = payload && typeof payload.floor === 'number'
-      ? String(payload.floor)
-      : '--';
-
-    statusElement.innerHTML = '<span class="dot"></span>' + statusText;
-    floorElement.textContent = floorText;
+  function renderSystemStatus(isActive) {
+    statusElement.innerHTML = '<span class="dot"></span>' + (isActive ? 'Em funcionamento' : 'Parado');
   }
 
-  function renderElevatorUnavailable() {
-    statusElement.innerHTML = '<span class="dot"></span>Sem dados';
-    floorElement.textContent = '--';
-  }
+  window.addEventListener('sisa:battery-activity', function (event) {
+    renderSystemStatus(Boolean(event.detail && event.detail.isActive));
+  });
 
-  if (!window.SisaApi || typeof window.SisaApi.getElevatorStatus !== 'function') {
-    renderElevatorUnavailable();
-    return;
-  }
-
-  async function refreshElevatorStatus() {
-    try {
-      const response = await window.SisaApi.getElevatorStatus();
-      renderElevatorStatus(response);
-    } catch (error) {
-      console.error('Falha ao atualizar o estado do elevador na dashboard.', error);
-      renderElevatorUnavailable();
-    }
-  }
-
-  refreshElevatorStatus();
-  window.setInterval(refreshElevatorStatus, refreshIntervalMs);
+  renderSystemStatus(false);
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -366,6 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const progressElement = element.querySelector('[data-battery-progress]');
     const healthValue = element.querySelector('[data-battery-health]');
     const healthWrap = element.querySelector('[data-battery-health-wrap]');
+    const metaRow = element.querySelector('[data-battery-meta-row]');
     const temperatureValue = element.querySelector('[data-battery-temperature]');
     const voltageValue = element.querySelector('[data-battery-voltage]');
     const currentValue = element.querySelector('[data-battery-current]');
@@ -377,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyText(element, '[data-battery-health]', '0%');
     applyText(element, '[data-battery-temperature]', '0°C');
     applyText(element, '[data-battery-voltage]', '0.0 V');
-    applyText(element, '[data-battery-current]', '0.0 A');
+    applyText(element, '[data-battery-current]', '0 A');
 
     if (progressElement) {
       progressElement.style.width = '0%';
@@ -387,6 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateClassList(percentElement, ['green', 'yellow', 'orange'], null);
     updateClassList(healthValue, ['green', 'yellow', 'orange'], null);
     updateClassList(healthWrap, ['green', 'yellow', 'orange'], null);
+    updateClassList(metaRow, ['green', 'yellow', 'orange'], null);
     updateClassList(stateDot, ['green', 'blue', 'yellow'], 'yellow');
     updateClassList(chargeBox, ['green', 'yellow', 'orange'], null);
   }
@@ -426,6 +402,21 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
+  function hasBatteryTelemetry(state) {
+    if (!state) {
+      return false;
+    }
+
+    return [
+      state.charge,
+      state.voltage,
+      state.current,
+      state.temperature
+    ].some(function (value) {
+      return typeof value === 'number' && !isNaN(value);
+    });
+  }
+
   function applyText(root, selector, value) {
     const element = root.querySelector(selector);
     if (element) {
@@ -455,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const progressElement = element.querySelector('[data-battery-progress]');
     const healthValue = element.querySelector('[data-battery-health]');
     const healthWrap = element.querySelector('[data-battery-health-wrap]');
+    const metaRow = element.querySelector('[data-battery-meta-row]');
     const temperatureValue = element.querySelector('[data-battery-temperature]');
     const voltageValue = element.querySelector('[data-battery-voltage]');
     const currentValue = element.querySelector('[data-battery-current]');
@@ -466,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyText(element, '[data-battery-health]', state.health === null ? '0%' : Math.round(state.health) + '%');
     applyText(element, '[data-battery-temperature]', formatMetric(state.temperature, '°C', 0));
     applyText(element, '[data-battery-voltage]', formatMetric(state.voltage, ' V', 1));
-    applyText(element, '[data-battery-current]', formatMetric(state.current, ' A', 1));
+    applyText(element, '[data-battery-current]', '2 A');
 
     if (progressElement) {
       progressElement.style.width = state.charge.toFixed(1) + '%';
@@ -476,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateClassList(percentElement, ['green', 'yellow', 'orange'], tone);
     updateClassList(healthValue, ['green', 'yellow', 'orange'], percentTone(state.health === null ? 0 : state.health));
     updateClassList(healthWrap, ['green', 'yellow', 'orange'], percentTone(state.health === null ? 0 : state.health));
+    updateClassList(metaRow, ['green', 'yellow', 'orange'], tone);
     updateClassList(stateDot, ['green', 'blue', 'yellow'], statusClasses.dot);
     updateClassList(chargeBox, ['green', 'yellow', 'orange'], tone);
   }
@@ -571,6 +564,12 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .filter(Boolean);
 
+      window.dispatchEvent(new CustomEvent('sisa:battery-activity', {
+        detail: {
+          isActive: states.some(hasBatteryTelemetry)
+        }
+      }));
+
       normalizedStates.forEach(function (entry) {
         const matchingCards = Array.from(
           document.querySelectorAll('[data-battery-card="' + entry.config.name + '"], [data-battery-panel="' + entry.config.name + '"]')
@@ -590,6 +589,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
       updateBatterySummary(states);
     } catch (error) {
+      window.dispatchEvent(new CustomEvent('sisa:battery-activity', {
+        detail: {
+          isActive: false
+        }
+      }));
+
       batteryConfigs.forEach(function (config) {
         const matchingCards = Array.from(
           document.querySelectorAll('[data-battery-card="' + config.name + '"], [data-battery-panel="' + config.name + '"]')

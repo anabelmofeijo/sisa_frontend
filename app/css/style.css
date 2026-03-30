@@ -242,44 +242,6 @@ h1 {
       padding-left: 2px;
     }
 
-    .status-floor-card {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #eef8f3 0%, #f7fbf9 100%);
-      border: 1px solid #d6ebe1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-    }
-
-    .status-floor-label {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #5f7282;
-    }
-
-    .status-floor-value {
-      min-width: 56px;
-      height: 44px;
-      padding: 0 14px;
-      border-radius: 12px;
-      background: #ffffff;
-      border: 1px solid #cfe4d9;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      font-weight: 800;
-      line-height: 1;
-      color: #10815f;
-      box-shadow: 0 8px 18px rgba(16, 129, 95, 0.08);
-    }
-
     .dot {
       width: 14px;
       height: 14px;
@@ -398,6 +360,48 @@ h1 {
     .health.yellow {
       background: #eee3b8;
       color: #6b5d2d;
+    }
+
+    .battery-meta-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .battery-meta-pill {
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .battery-meta-pill span {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #667085;
+      margin-bottom: 6px;
+    }
+
+    .battery-meta-pill strong {
+      font-size: 18px;
+      color: #0f172a;
+    }
+
+    .battery-meta-row.green .battery-meta-pill {
+      background: linear-gradient(180deg, rgba(221, 245, 236, 0.95), rgba(202, 236, 222, 0.88));
+    }
+
+    .battery-meta-row.yellow .battery-meta-pill {
+      background: linear-gradient(180deg, rgba(248, 241, 211, 0.96), rgba(239, 228, 180, 0.88));
+    }
+
+    .battery-meta-row.orange .battery-meta-pill {
+      background: linear-gradient(180deg, rgba(255, 231, 214, 0.96), rgba(255, 214, 183, 0.9));
     }
 
     .section {
