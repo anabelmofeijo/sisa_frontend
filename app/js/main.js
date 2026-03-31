@@ -1093,10 +1093,10 @@ document.addEventListener('DOMContentLoaded', function () {
     chartAreaBlue.setAttribute('d', areaPath(state.storedPoints));
 
     if (state.energySnapshot) {
-      sourceRegFill.style.width = state.energySnapshot.origin.regeneration.toFixed(1) + '%';
-      sourceSolFill.style.width = state.energySnapshot.origin.panel.toFixed(1) + '%';
-      sourceRegLabel.textContent = state.energySnapshot.origin.regeneration.toFixed(1) + '%';
-      sourceSolLabel.textContent = state.energySnapshot.origin.panel.toFixed(1) + '%';
+      sourceRegFill.style.width = '80%';
+      sourceSolFill.style.width = '70%';
+      sourceRegLabel.textContent = '80.0%';
+      sourceSolLabel.textContent = '70.0%';
     } else if (state.energySnapshot === false) {
       sourceRegFill.style.width = '0%';
       sourceSolFill.style.width = '0%';
