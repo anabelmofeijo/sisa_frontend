@@ -439,6 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
       temperature: temperature,
       voltage: voltage,
       current: current,
+      currentUnit: ' A',
       status: status
     };
   }
@@ -451,19 +452,24 @@ document.addEventListener('DOMContentLoaded', function () {
       return entry && entry.state && entry.state.name === 'second_batery';
     });
 
-    if (!batteryAEntry || !batteryBEntry || !batteryBEntry.state) {
+    if (!batteryAEntry || !batteryAEntry.state || !batteryBEntry || !batteryBEntry.state) {
       return entries;
     }
 
     return entries.map(function (entry) {
-      if (!entry || !entry.state || entry.state.name !== 'first_batery') {
+      if (!entry || !entry.state || entry.state.name !== 'second_batery') {
         return entry;
       }
 
+      const mappedCharge = clampPercent(batteryAEntry.state.temperature);
+      const mappedVoltage = batteryAEntry.state.current;
+
       return Object.assign({}, entry, {
         state: Object.assign({}, entry.state, {
-          current: batteryBEntry.state.voltage,
-          temperature: batteryBEntry.state.charge
+          charge: mappedCharge,
+          voltage: mappedVoltage,
+          temperature: batteryAEntry.state.temperature,
+          status: deriveStatus(entry.state.status, entry.state.current)
         })
       });
     });
