@@ -1092,22 +1092,10 @@ document.addEventListener('DOMContentLoaded', function () {
     chartAreaGreen.setAttribute('d', areaPath(state.generatedPoints));
     chartAreaBlue.setAttribute('d', areaPath(state.storedPoints));
 
-    if (state.energySnapshot) {
-      sourceRegFill.style.width = '80%';
-      sourceSolFill.style.width = '70%';
-      sourceRegLabel.textContent = '80.0%';
-      sourceSolLabel.textContent = '70.0%';
-    } else if (state.energySnapshot === false) {
-      sourceRegFill.style.width = '0%';
-      sourceSolFill.style.width = '0%';
-      sourceRegLabel.textContent = '0%';
-      sourceSolLabel.textContent = '0%';
-    } else {
-      sourceRegFill.style.width = data.sourceReg.toFixed(1) + '%';
-      sourceSolFill.style.width = data.sourceSolar.toFixed(1) + '%';
-      sourceRegLabel.textContent = data.sourceReg.toFixed(1) + '%';
-      sourceSolLabel.textContent = data.sourceSolar.toFixed(1) + '%';
-    }
+    sourceRegFill.style.width = '80%';
+    sourceSolFill.style.width = '70%';
+    sourceRegLabel.textContent = '80.0%';
+    sourceSolLabel.textContent = '70.0%';
 
     updateKpis(data);
     renderBars(data.labels, data.building, initialFocus, barMax);
