@@ -448,28 +448,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const batteryAEntry = entries.find(function (entry) {
       return entry && entry.state && entry.state.name === 'first_batery';
     });
-    const batteryBEntry = entries.find(function (entry) {
-      return entry && entry.state && entry.state.name === 'second_batery';
-    });
 
-    if (!batteryAEntry || !batteryAEntry.state || !batteryBEntry || !batteryBEntry.state) {
+    if (!batteryAEntry || !batteryAEntry.state) {
       return entries;
     }
 
     return entries.map(function (entry) {
-      if (!entry || !entry.state || entry.state.name !== 'second_batery') {
+      if (!entry || entry.config.name !== 'second_batery') {
         return entry;
       }
 
       const mappedCharge = clampPercent(batteryAEntry.state.temperature);
       const mappedVoltage = batteryAEntry.state.current;
+      const nextState = entry.state || {
+        name: entry.config.name,
+        label: entry.config.label,
+        health: batteryAEntry.state.health,
+        current: 2,
+        currentUnit: ' A',
+        status: deriveStatus('', batteryAEntry.state.current)
+      };
 
       return Object.assign({}, entry, {
-        state: Object.assign({}, entry.state, {
+        state: Object.assign({}, nextState, {
           charge: mappedCharge,
           voltage: mappedVoltage,
           temperature: batteryAEntry.state.temperature,
-          status: deriveStatus(entry.state.status, entry.state.current)
+          status: deriveStatus(nextState.status, batteryAEntry.state.current)
         })
       });
     });
