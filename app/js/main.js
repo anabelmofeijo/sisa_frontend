@@ -2,6 +2,47 @@ function formatKwh(value) {
   return value === null ? '0.000 kWh' : value.toFixed(3) + ' kWh';
 }
 
+function formatPlainNumber(value, maxFractionDigits) {
+  const fixedValue = value.toFixed(maxFractionDigits);
+  return fixedValue.replace(/\.?0+$/, '');
+}
+
+function formatJoules(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0 J';
+  }
+
+  return formatPlainNumber(value, 2) + ' J';
+}
+
+function formatKilojoules(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0 KJ';
+  }
+
+  return formatPlainNumber(value / 1000, 2) + ' KJ';
+}
+
+function formatKjValue(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0 KJ';
+  }
+
+  return formatPlainNumber(value, 2) + ' KJ';
+}
+
+function formatPower(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return '0.000 W';
+  }
+
+  if (Math.abs(value) >= 1000) {
+    return (value / 1000).toFixed(3) + ' kW';
+  }
+
+  return value.toFixed(3) + ' W';
+}
+
 function formatEnergyValue(value) {
   return value === null ? '0.000' : value.toFixed(3);
 }
@@ -660,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!snapshot) {
       sourceName.textContent = 'Fonte indisponível';
       sourceNote.textContent = '0% da energia atual';
-      buildingValue.textContent = '0.000 kWh';
+      buildingValue.textContent = '0 KJ';
       buildingDestination.textContent = 'Não definido';
       updateText.textContent = 'Atualização automática a cada 60 segundos • Última atualização: 0';
       return;
@@ -678,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     sourceName.textContent = dominantSource.name;
     sourceNote.textContent = dominantSource.share.toFixed(1) + '% da energia atual';
-    buildingValue.textContent = formatKwh(snapshot.consumed);
+    buildingValue.textContent = formatKjValue(snapshot.consumed);
     buildingDestination.textContent = dominantSource.name;
 
     if (snapshot.timestamp) {
@@ -881,15 +922,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateKpis(data) {
     if (state.energySnapshot) {
-      kpiGerada.textContent = formatKwh(state.energySnapshot.generated);
-      kpiConsumida.textContent = formatKwh(state.energySnapshot.consumed);
-      kpiArmazenada.textContent = formatKwh(state.energySnapshot.stored);
+      kpiGerada.textContent = formatJoules(state.energySnapshot.generated);
+      kpiConsumida.textContent = formatKjValue(state.energySnapshot.consumed);
+      kpiArmazenada.textContent = formatKjValue(state.energySnapshot.stored);
       return;
     }
 
-    kpiGerada.textContent = '0.000 kWh';
-    kpiConsumida.textContent = '0.000 kWh';
-    kpiArmazenada.textContent = '0.000 kWh';
+    kpiGerada.textContent = '0 J';
+    kpiConsumida.textContent = '0 KJ';
+    kpiArmazenada.textContent = '0 KJ';
   }
 
   function updateBarsFocus(index) {
@@ -910,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (barsTooltip && barsTipTime && barsTipValue && x !== undefined) {
       barsTooltip.style.left = ((x / bounds.svgWidth) * 100).toFixed(2) + '%';
       barsTipTime.textContent = state.labels[safeIndex];
-      barsTipValue.textContent = 'Energia para Edificio : ' + state.barValues[safeIndex].toFixed(1);
+      barsTipValue.textContent = 'Energia para Edificio : ' + formatKjValue(state.barValues[safeIndex]);
     }
   }
 
