@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyText(element, '[data-battery-status]', 'Sem dados');
     applyText(element, '[data-battery-percent]', '0%');
     applyText(element, '[data-battery-health]', '0%');
-    applyText(element, '[data-battery-temperature]', '0°C');
+    applyText(element, '[data-battery-temperature]', '0%');
     applyText(element, '[data-battery-voltage]', '0.0 V');
     applyText(element, '[data-battery-current]', '0 A');
 
@@ -441,6 +441,32 @@ document.addEventListener('DOMContentLoaded', function () {
       current: current,
       status: status
     };
+  }
+
+  function applyCrossBatteryMapping(entries) {
+    const batteryAEntry = entries.find(function (entry) {
+      return entry && entry.state && entry.state.name === 'first_batery';
+    });
+    const batteryBEntry = entries.find(function (entry) {
+      return entry && entry.state && entry.state.name === 'second_batery';
+    });
+
+    if (!batteryAEntry || !batteryBEntry || !batteryBEntry.state) {
+      return entries;
+    }
+
+    return entries.map(function (entry) {
+      if (!entry || !entry.state || entry.state.name !== 'first_batery') {
+        return entry;
+      }
+
+      return Object.assign({}, entry, {
+        state: Object.assign({}, entry.state, {
+          current: batteryBEntry.state.voltage,
+          temperature: batteryBEntry.state.charge
+        })
+      });
+    });
   }
 
   function hasBatteryTelemetry(state) {
@@ -497,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function () {
     applyText(element, '[data-battery-status]', state.status);
     applyText(element, '[data-battery-percent]', Math.round(state.charge) + '%');
     applyText(element, '[data-battery-health]', state.health === null ? '0%' : Math.round(state.health) + '%');
-    applyText(element, '[data-battery-temperature]', formatMetric(state.temperature, '°C', 0));
+    applyText(element, '[data-battery-temperature]', formatMetric(state.temperature, '%', 0));
     applyText(element, '[data-battery-voltage]', formatMetric(state.voltage, ' V', 1));
     applyText(element, '[data-battery-current]', '2 A');
 
@@ -592,12 +618,12 @@ document.addEventListener('DOMContentLoaded', function () {
         })
       );
 
-      const normalizedStates = responses.map(function (response, index) {
+      const normalizedStates = applyCrossBatteryMapping(responses.map(function (response, index) {
         return {
           config: batteryConfigs[index],
           state: normalizeBatteryState(batteryConfigs[index], response)
         };
-      });
+      }));
 
       const states = normalizedStates
         .map(function (entry) {
